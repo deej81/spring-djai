@@ -16,6 +16,7 @@ import java.util.Vector;
 /**
  *
  * @author deej
+ * added to google code 4th september
  */
 public class DJAIResource {
     public Vector m_vUnitDefs = new Vector();
