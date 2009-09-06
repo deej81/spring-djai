@@ -18,10 +18,12 @@ import com.springrts.ai.AIFloat3;
 import com.springrts.ai.command.AttackUnitAICommand;
 import com.springrts.ai.command.BuildUnitAICommand;
 import com.springrts.ai.command.GuardUnitAICommand;
+import com.springrts.ai.command.MoveUnitAICommand;
 import com.springrts.ai.command.SendTextMessageAICommand;
 import com.springrts.ai.oo.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
@@ -35,6 +37,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     private AIFloat3 basePos;
     private Boolean m_FirstFactory=true;
     private Unit m_FirstFactoryUnit;
+    private Random m_Rand = new Random();
 
     public int handleEngineCommand(AICommand command) {
 		return m_Callback.getEngine().handleCommand(
@@ -73,8 +76,20 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
     DJAIUnit newUnit = new DJAIUnit(unit);
     units.add(newUnit);
+    try{
+        if(unit.getDef().getName().equals("armpw")){
+            if(m_Rand.nextInt(10)==0) {
+                sendTextMsg("scout created");
+                newUnit.IsScouter=true;
+                newUnit.IsAttacker=false;
+            }
+        }
+    }catch(Exception ex){
+        sendTextMsg("error creating scout: "+ex.getMessage());
+    }
+
     doNextBuild(newUnit);
-   return 0;
+    return 0;
 }
 
   @Override
@@ -94,7 +109,20 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 	}
 
   private void doNextBuild(DJAIUnit unit){
-        if(unit.IsAttacker) return;
+       if(unit.IsAttacker) return;
+       if(unit.IsScouter){
+           try{
+               int rand = m_Rand.nextInt(m_ResourceHandler.MexSpots().size());
+               AIFloat3 pos = m_ResourceHandler.MexSpots().get(rand).ExactLocation;
+
+               AICommand command = new MoveUnitAICommand(unit.SpringUnit, -1, new ArrayList(), 1000, pos);
+                this.m_Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
+                return;
+           }catch(Exception ex){
+                sendTextMsg("scout command failed: "+ex.getMessage());
+
+           }
+        }
         List<UnitDef> unitDefs = this.m_Callback.getUnitDefs();
         UnitDef toBuild = null;
         String[] list = this.m_TaskManager.getTaskForUnit(unit.SpringUnit, this);
@@ -136,7 +164,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
   }
 
   private void distributeAttackers(int frame){
-      int maxAttackers=10;
+      int maxAttackers=2;
              int attackers=0;
              sendTextMsg("Enemy Count: "+String.valueOf(enemies.size()));
                 for(DJAIEnemyUnit enemy:enemies){
@@ -155,9 +183,9 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                      sendTextMsg("current number of units: "+String.valueOf(units.size()));
                     for(DJAIUnit unit : units){
                         sendTextMsg("In Attackers Loop");
-                        if(frame-unit.FrameCommand>30000){
-                            unit.Attaking=null;
-                            sendTextMsg("Unit Job Cleared");
+                        if(frame-unit.FrameCommand>60000){
+                           //unit.Attaking=null;
+                            //sendTextMsg("Unit Job Cleared");
                         }
                         if(attackers==maxAttackers){
                             sendTextMsg("Enough Attackers");

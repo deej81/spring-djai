@@ -6,6 +6,7 @@
 package DJAI.Resources;
 
 import DJAI.DJAI;
+import DJAI.Utilities.VectorUtils;
 import com.springrts.ai.AIFloat3;
 import com.springrts.ai.oo.Map;
 import com.springrts.ai.oo.Resource;
@@ -80,7 +81,7 @@ public class DJAIResource {
         for(ResourceSquare square: m_Squares){
             
             if(!square.Occupied){
-                double sqDist = calcDistance(currPos, square.ExactLocation);
+                double sqDist = VectorUtils.CalcDistance(currPos, square.ExactLocation);
                 if(sqDist<currBest||currBest==-1){
                     currBest = sqDist;
                     currentChoice=square;
@@ -172,18 +173,5 @@ public class DJAIResource {
         
     }
 
-    private double calcDistance(AIFloat3 x, AIFloat3 y){
-
-        float xAxis = x.x-y.x;
-        float yAxis = x.z-y.z;
-
-        xAxis = (xAxis*xAxis);
-        yAxis = (yAxis*yAxis);
-
-        double d = xAxis+yAxis;
-
-        return Math.sqrt(d);
-
-    }
     
 }
