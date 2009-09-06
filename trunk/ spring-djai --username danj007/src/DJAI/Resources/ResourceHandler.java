@@ -10,6 +10,7 @@ import com.springrts.ai.AIFloat3;
 import com.springrts.ai.oo.OOAICallback;
 import com.springrts.ai.oo.Resource;
 import com.springrts.ai.oo.UnitDef;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -55,6 +56,16 @@ public class ResourceHandler {
         }
 
         return true;
+
+    }
+
+    public List<ResourceSquare> MexSpots(){
+         for(int y=0;y<m_Resources.length;y++){
+                if(m_Resources[y].m_Resource.getName().equals("Metal")){
+                    return m_Resources[y].m_Squares;
+                }
+            }
+         return new ArrayList();
 
     }
     

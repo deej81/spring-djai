@@ -6,6 +6,7 @@
 package DJAI;
 
 import com.springrts.ai.oo.Unit;
+import com.springrts.ai.oo.WeaponMount;
 
 /**
  *
@@ -15,12 +16,42 @@ import com.springrts.ai.oo.Unit;
 
 public class DJAIUnit{
 
-    private Unit m_SpringUnit;
+    public Unit SpringUnit;
+    public int BuildIndex = 0;
+    public Boolean IsAttacker=false;
+    private float m_AttackPotential = -1;
+    public Unit Attaking;
+    public int FrameCommand=0;
+    public Boolean IsScouter=false;
 
     public DJAIUnit(Unit springUnit){
-        m_SpringUnit = springUnit;
+        SpringUnit = springUnit;
+        IsAttacker = !springUnit.getDef().isBuilder();
+        //IsScouter = springUnit.getDef().getName().equals("armpw");
 
     }
 
     public String CurrentlyBuilding;
+
+    public float AttackPotential(){
+
+        if(m_AttackPotential==-1) calculateAttackPotential();
+
+        return m_AttackPotential;
+    }
+
+    public Boolean CanAttackAircraft(){
+        return false;
+    }
+
+    private void calculateAttackPotential() {
+        m_AttackPotential=0;
+       for(WeaponMount weapon:this.SpringUnit.getDef().getWeaponMounts() ){
+
+            m_AttackPotential+=weapon.getWeaponDef().getDynDamageExp();
+       }
+    }
+
+
+
 }
