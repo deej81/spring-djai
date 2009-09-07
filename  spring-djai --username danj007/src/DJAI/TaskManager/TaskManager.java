@@ -32,7 +32,7 @@ public class TaskManager {
 
         switch(UnitNames.valueOf(name)){
             case armcom: case armck:
-                String[] ret = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armmex","armmex","armmex"};
+                String[] ret = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex"};
                 return ret;
             case armlab:
                 String[] ret2 = {"armck","armpw","armjeth","armpw","armwar","armpw","armpw","armwar","armpw","armpw","armpw"};

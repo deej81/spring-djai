@@ -15,6 +15,7 @@ import DJAI.Utilities.VectorUtils;
 import com.springrts.ai.AICommand;
 import com.springrts.ai.AICommandWrapper;
 import com.springrts.ai.AIFloat3;
+import com.springrts.ai.command.AttackAreaUnitAICommand;
 import com.springrts.ai.command.AttackUnitAICommand;
 import com.springrts.ai.command.BuildUnitAICommand;
 import com.springrts.ai.command.GuardUnitAICommand;
@@ -24,6 +25,7 @@ import com.springrts.ai.oo.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.Vector;
 
 public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
@@ -46,10 +48,10 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 	}
 	public int sendTextMsg(String msg) {
 
-		SendTextMessageAICommand msgCmd
-				= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
-		return handleEngineCommand(msgCmd);
-        //return 0;
+		//SendTextMessageAICommand msgCmd
+		//		= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
+		//return handleEngineCommand(msgCmd);
+        return 0;
 	}
 
   @Override public int init(int teamId, OOAICallback callback){
@@ -78,7 +80,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     units.add(newUnit);
     try{
         if(unit.getDef().getName().equals("armpw")){
-            if(m_Rand.nextInt(10)==0) {
+            if(m_Rand.nextInt(10)==0||units.size()<20) {
                 sendTextMsg("scout created");
                 newUnit.IsScouter=true;
                 newUnit.IsAttacker=false;
@@ -164,7 +166,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
   }
 
   private void distributeAttackers(int frame){
-      int maxAttackers=2;
+      int boost=frame/20000;
+      int maxAttackers=10;
              int attackers=0;
              sendTextMsg("Enemy Count: "+String.valueOf(enemies.size()));
                 for(DJAIEnemyUnit enemy:enemies){
@@ -208,18 +211,41 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
                         }
 
-                        if(unit.IsAttacker&&unit.Attaking==null){
+                        if(unit.IsAttacker&&frame-unit.FrameCommand>3000){
                                  try{
-                                    enemy.BeingAttackedBy.add(unit);
-                                    unit.Attaking = enemy.SpringUnit;
-                                    unit.FrameCommand=frame;
+                                    
                                     sendTextMsg("creating attack command");
-                                    AICommand command = new AttackUnitAICommand(unit.SpringUnit, 0,new ArrayList(), 1000, enemy.SpringUnit );
-                                
-                                    this.m_Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
+                                    AICommand command;
+                                    if(enemy.SpringUnit.getDef()==null){
+                                        //no idea about this attack it
+                                        if(enemy.SpringUnit.getPos().x==0){
+                                            enemies.remove(enemy);
+                                            break;
+
+                                        }else{
+                                            command = new AttackUnitAICommand(unit.SpringUnit, 0,new ArrayList(), 1000, enemy.SpringUnit);
+                                        }
+
+                                    }else{
+                                        command = new MoveUnitAICommand(unit.SpringUnit, 0,new ArrayList(), 1000, enemy.SpringUnit.getPos());
+
+                                    }
+                                    
+                                    int retVal = this.m_Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
                                     //sendTextMsg("ATTACKING: " +enemy.getDef().getName());
                                     sendTextMsg("attack command sent");
-                                    attackers++;
+                                    if(retVal==0){
+                                        enemy.BeingAttackedBy.add(unit);
+                                        unit.Attaking = enemy.SpringUnit;
+                                        unit.FrameCommand=frame;
+                                        attackers++;
+                                        sendTextMsg("attack command ok");
+                                    }else{
+
+                                        sendTextMsg("attack command failed");
+                                        unit.FrameCommand=frame;
+                                    }
+                                    
                                 }catch(Exception ex){
                                     sendTextMsg("attack command failed: "+ex.getMessage());
                                     //enemies.remove(enemy);
@@ -238,7 +264,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
   @Override public int update(int frame) {
         if (frame % 300 == 0) {
-            sendTextMsg("Update Time");
+            sendTextMsg("Update Time yeah!");
              try{
                  distributeAttackers(frame);
              }catch(Exception ex){
@@ -338,6 +364,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                    if(unit.Attaking!=null){
                         if(unit.Attaking.equals(enemy)){
                            unit.Attaking=null;
+                           unit.FrameCommand=0;
                            sendTextMsg("Cleared attacker for future use");
                         }
                     }
@@ -359,6 +386,12 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
     private void removeEnemy(Unit enemy){
         clearUnitsAttacking(enemy);
+        if(enemy.getDef()!=null){
+            if(enemy.getHealth()!=0&&!enemy.getDef().isAbleToMove()){
+                //building keep it in list
+                return;
+            }
+        }
         for(DJAIEnemyUnit de: enemies){
             if(de.SpringUnit==null){
                 sendTextMsg("Cleared null enemy");

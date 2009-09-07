@@ -86,7 +86,7 @@ public class ResourceHandler {
             
         }else{
             
-            return callback.getMap().findClosestBuildSite(unitDef, currPos, 1000, 1, 0);
+            return callback.getMap().findClosestBuildSite(unitDef, currPos, 1000, 5, 0);
             
         }
         
