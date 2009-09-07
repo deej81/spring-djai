@@ -18,16 +18,28 @@ public class DJAIUnit{
 
     public Unit SpringUnit;
     public int BuildIndex = 0;
-    public Boolean IsAttacker=false;
+    
     private float m_AttackPotential = -1;
     public Unit Attaking;
     public int FrameCommand=0;
+
     public Boolean IsScouter=false;
+    public Boolean IsBuilder=false;
+    public Boolean IsFactory=false;
+    public Boolean IsCommander=false;
+    public Boolean IsAttacker=false;
+    public Boolean IsExtractor=false;
+
+    public Boolean IsFactoryOnWait=false;
 
     public DJAIUnit(Unit springUnit){
         SpringUnit = springUnit;
-        IsAttacker = !springUnit.getDef().isBuilder();
-        //IsScouter = springUnit.getDef().getName().equals("armpw");
+
+        IsCommander = springUnit.getDef().isCommander();
+        IsFactory = springUnit.getDef().getSpeed()==0&&springUnit.getDef().getBuildOptions().size()>0;
+        IsBuilder = springUnit.getDef().isBuilder()&&!IsFactory;
+        IsAttacker = springUnit.getDef().isAbleToFight()&&!IsCommander&&!IsFactory&&!IsBuilder;
+        IsScouter = springUnit.getDef().getName().equals("armflea");
 
     }
 

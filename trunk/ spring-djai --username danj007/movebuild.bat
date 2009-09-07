@@ -1,0 +1,1 @@
+copy dist\djai.jar ..\djai\0.1\SkirmishAI.jar /Y

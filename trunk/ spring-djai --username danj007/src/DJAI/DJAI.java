@@ -29,7 +29,7 @@ import java.util.Vector;
 
 public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
-    private OOAICallback m_Callback;
+    public OOAICallback Callback;
     private Unit commander;
     private ResourceHandler m_ResourceHandler = new ResourceHandler();
     private TaskManager m_TaskManager = new TaskManager();
@@ -38,49 +38,40 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     private List<DJAIEnemyUnit> enemies = new ArrayList();
     private AIFloat3 basePos;
     private Boolean m_FirstFactory=true;
-    private Unit m_FirstFactoryUnit;
+    public Unit FirstFactoryUnit;
     private Random m_Rand = new Random();
 
     public int handleEngineCommand(AICommand command) {
-		return m_Callback.getEngine().handleCommand(
+		return Callback.getEngine().handleCommand(
 				com.springrts.ai.AICommandWrapper.COMMAND_TO_ID_ENGINE,
 				-1, command);
 	}
 	public int sendTextMsg(String msg) {
 
 		//SendTextMessageAICommand msgCmd
-			//	= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
+			//= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
 		//return handleEngineCommand(msgCmd);
         return 0;
 	}
 
   @Override public int init(int teamId, OOAICallback callback){
-      m_Callback = callback;
+      Callback = callback;
 
       loadModInfo();
       sendTextMsg("creating resource handler");
-      m_ResourceHandler.initializeResources(m_Callback,this);
+      m_ResourceHandler.initializeResources(Callback,this);
       sendTextMsg("resource handler created");
       return 0;
   }
 
   @Override public int unitFinished(Unit unit) {
-    if (unit.getDef().getName().equals("armcom")){
-       this.commander = unit;
-       basePos = unit.getPos();
-    }
-
-    else if(m_FirstFactory&&unit.getDef().getName().equals("armlab")){
-        m_FirstFactory = false;
-        basePos = unit.getPos();
-        m_FirstFactoryUnit = unit;
-    }
 
     DJAIUnit newUnit = new DJAIUnit(unit);
+    sendTextMsg("unit IsFactory: "+String.valueOf(newUnit.IsFactory));
     units.add(newUnit);
     try{
         if(unit.getDef().getName().equals("armpw")){
-            if(m_Rand.nextInt(10)==0||units.size()<20) {
+            if(m_Rand.nextInt(10)==0||units.size()<15) {
                 sendTextMsg("scout created");
                 newUnit.IsScouter=true;
                 newUnit.IsAttacker=false;
@@ -90,7 +81,19 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
         sendTextMsg("error creating scout: "+ex.getMessage());
     }
 
-    doNextBuild(newUnit);
+    if (unit.getDef().getName().equals("armcom")){
+       this.commander = unit;
+       basePos = unit.getPos();
+    }
+
+    else if(m_FirstFactory&&newUnit.IsFactory){
+        m_FirstFactory = false;
+        basePos = unit.getPos();
+        FirstFactoryUnit = unit;
+    }
+
+    
+    m_TaskManager.allocateTaskToUnit(newUnit, m_ResourceHandler, this);
     return 0;
 }
 
@@ -99,7 +102,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
             try{
                 for(DJAIUnit djUn: units){
                     if(unit.equals(djUn.SpringUnit)){
-                        doNextBuild(djUn);
+                        m_TaskManager.allocateTaskToUnit(djUn, m_ResourceHandler, this);
                         break;
                     }
                 }
@@ -107,67 +110,30 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                 sendTextMsg("Failed to do next build: "+ex);
 
             }
+
+
+
             return 0; // signaling: OK
 	}
 
-  private void doNextBuild(DJAIUnit unit){
-       if(unit.IsAttacker) return;
-       if(unit.IsScouter){
-           try{
-               int rand = m_Rand.nextInt(m_ResourceHandler.MexSpots().size());
-               AIFloat3 pos = m_ResourceHandler.MexSpots().get(rand).ExactLocation;
-
-               AICommand command = new MoveUnitAICommand(unit.SpringUnit, -1, new ArrayList(), 1000, pos);
-                this.m_Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
-                return;
-           }catch(Exception ex){
-                sendTextMsg("scout command failed: "+ex.getMessage());
-
-           }
-        }
-        List<UnitDef> unitDefs = this.m_Callback.getUnitDefs();
-        UnitDef toBuild = null;
-        String[] list = this.m_TaskManager.getTaskForUnit(unit.SpringUnit, this);
-        String buildID = list[unit.BuildIndex];
-
-        unit.BuildIndex++;
-        if(unit.BuildIndex==list.length){
-            if(unit.SpringUnit.equals(this.commander)){
-                AICommand command = new GuardUnitAICommand(this.commander,0,new ArrayList(), 1000, m_FirstFactoryUnit );
-                try{
-                    this.m_Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
-                }catch(Exception ex){
-                    sendTextMsg("command failed: "+ex.getMessage());
-                                   
+    private void checkForEnableWaitingFactories() {
+        for(DJAIUnit unit: units){
+            if(unit.IsFactory) {
+                sendTextMsg("found factory");
+                if(unit.IsFactoryOnWait){
+                    sendTextMsg("waiting factory unleashed");
+                    unit.IsFactoryOnWait=false;
+                    m_TaskManager.allocateTaskToUnit(unit, m_ResourceHandler, this);
                 }
-                return;
-                
-            }else{
-                unit.BuildIndex=0;
             }
         }
+    }
 
-        for (UnitDef def : unitDefs)
-
-            if (def.getName().equals(buildID))
-            {
-                 toBuild = def;
-                    break;
-            }
-            sendTextMsg("looking for build spot");
-        AIFloat3 buildPos = m_ResourceHandler.getSpotforUnit(toBuild, m_Callback, unit.SpringUnit.getPos(),this);
-
-       if(buildPos==null) return;
-       AICommand command = new BuildUnitAICommand(unit.SpringUnit, -1,
-           new ArrayList<AICommand.Option>(), 10000, toBuild,
-           buildPos, 0);
-       int retVal = this.m_Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE,
-           -1, command);
-  }
+  
 
   private void distributeAttackers(int frame){
-      int boost=frame/20000;
-      int maxAttackers=10;
+      int boost=frame/15000;
+      int maxAttackers=3+boost;
              int attackers=0;
              sendTextMsg("Enemy Count: "+String.valueOf(enemies.size()));
                 for(DJAIEnemyUnit enemy:enemies){
@@ -233,7 +199,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
                                    // }
                                     
-                                    int retVal = this.m_Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
+                                    int retVal = this.Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
                                     //sendTextMsg("ATTACKING: " +enemy.getDef().getName());
                                     sendTextMsg("attack command sent");
                                     if(retVal==0){
@@ -273,14 +239,19 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                  sendTextMsg("attack distribution failed: "+ex.getMessage());
              }
 
+            
              sendTextMsg("Update Complete");
+        }
+        if (frame % 400 == 0) {
+
+            checkForEnableWaitingFactories();
         }
 
    return 0;
 }
 
     private void loadModInfo() {
-        Mod modInfo = m_Callback.getMod();
+        Mod modInfo = Callback.getMod();
 
 
 
