@@ -49,7 +49,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 	public int sendTextMsg(String msg) {
 
 		//SendTextMessageAICommand msgCmd
-		//		= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
+			//	= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
 		//return handleEngineCommand(msgCmd);
         return 0;
 	}
@@ -184,12 +184,13 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                      if(units==null) break;
                      sendTextMsg("In Enemy Loop 3");
                      sendTextMsg("current number of units: "+String.valueOf(units.size()));
+
                     for(DJAIUnit unit : units){
                         sendTextMsg("In Attackers Loop");
-                        if(frame-unit.FrameCommand>60000){
+                        //if(frame-unit.FrameCommand>60000){
                            //unit.Attaking=null;
                             //sendTextMsg("Unit Job Cleared");
-                        }
+                        //}
                         if(attackers==maxAttackers){
                             sendTextMsg("Enough Attackers");
                             break;
@@ -199,19 +200,19 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                         //sendTextMsg("ALLOCATING ATTACKER: " +enemy.getDef().getName());
                         if(unit==null){
                             sendTextMsg("Own Attacker dead");
-                            units.remove(unit);
+                            //units.remove(unit);
                             break;
 
                         }
 
                         if(unit.SpringUnit==null){
                             sendTextMsg("Own Attacker sp unit dead");
-                            units.remove(unit);
+                            //units.remove(unit);
                             break;
 
                         }
 
-                        if(unit.IsAttacker&&frame-unit.FrameCommand>3000){
+                        if(unit.IsAttacker&&frame-unit.FrameCommand>6000){
                                  try{
                                     
                                     sendTextMsg("creating attack command");
@@ -219,7 +220,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                                     //if(enemy.SpringUnit.getDef()==null){
                                         //no idea about this attack it
                                         if(enemy.SpringUnit.getPos().x==0){
-                                            enemies.remove(enemy);
+                                            //enemies.remove(enemy);
+                                            sendTextMsg("no enemy position");
                                             break;
 
                                         }//else{
@@ -253,7 +255,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                         }else if(!unit.IsAttacker){
 
                             sendTextMsg("not attacker");
-                        }else if(unit.Attaking!=null){
+                        }else{
                             sendTextMsg("already on a job");
 
                         }
@@ -263,7 +265,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
   }
 
   @Override public int update(int frame) {
-        if (frame % 300 == 0) {
+        if (frame % 600 == 0) {
             sendTextMsg("Update Time yeah!");
              try{
                  distributeAttackers(frame);
@@ -379,7 +381,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     private void registerEnemy(Unit enemy){
 
         DJAIEnemyUnit unit = new DJAIEnemyUnit(enemy);
-        enemies.add(unit);
+        if(!enemies.contains(unit))
+            enemies.add(unit);
         sendTextMsg("registered enemy");
 
     }
