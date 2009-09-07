@@ -21,6 +21,27 @@ public class ResourceHandler {
 
     private DJAIResource[] m_Resources;
 
+    public Resource getMostNeededResource(DJAI ai) {
+        Resource mostNeeded=null;
+        double currMaxPercent=0;
+        List<Resource> resources = ai.Callback.getResources();
+			for (Resource resource : resources) {
+                float currentUsage = ai.Callback.getEconomy().getUsage(resource)-ai.Callback.getEconomy().getIncome(resource);
+
+                if(currentUsage>0){
+                    double percentUse = currentUsage/ai.Callback.getEconomy().getCurrent(resource);
+                     ai.sendTextMsg("resource use for "+resource.getName()+ " is "+String.valueOf(percentUse));
+                    if(percentUse>currMaxPercent){
+                        currMaxPercent = percentUse;
+                        mostNeeded = resource;
+                    }
+                }
+
+			}
+            ai.sendTextMsg("most needed resource: "+mostNeeded.getName());
+            return mostNeeded;
+    }
+
     public Boolean initializeResources(OOAICallback m_Callback, DJAI ai){
 
         m_Resources = new DJAIResource[m_Callback.getResources().size()];
@@ -49,9 +70,9 @@ public class ResourceHandler {
             }
             ai.sendTextMsg("map created for: "+ (m_Resources[y].m_Resource).getName());
             
-            for(UnitDef def: m_Callback.getUnitDefs()){
+            //for(UnitDef def: m_Callback.getUnitDefs()){
                 //def.
-            }
+           // }
 
         }
 
@@ -100,6 +121,23 @@ public class ResourceHandler {
         }
         
         
+    }
+
+    public boolean shortOnResource(DJAI ai) {
+        List<Resource> resources = ai.Callback.getResources();
+			for (Resource resource : resources) {
+                float currentUsage = ai.Callback.getEconomy().getUsage(resource)-ai.Callback.getEconomy().getIncome(resource);
+                
+                if(currentUsage>0){
+                    double percentUse = currentUsage/ai.Callback.getEconomy().getCurrent(resource);
+                    if(percentUse>0.1) {
+                         ai.sendTextMsg("Resources Needed");
+                        return true;
+                    }
+                }
+                
+			}
+            return false;
     }
 
 

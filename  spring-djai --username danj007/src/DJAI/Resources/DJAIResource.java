@@ -77,7 +77,7 @@ public class DJAIResource {
 
         for(ResourceSquare square: m_Squares){
             
-            if(!square.Occupied){
+            if(!square.Occupied||!occupy){
                 double sqDist = VectorUtils.CalcDistance(currPos, square.ExactLocation);
                 if(sqDist<currBest||currBest==-1){
                     currBest = sqDist;
