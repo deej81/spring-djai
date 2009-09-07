@@ -59,6 +59,15 @@ public class ResourceHandler {
 
     }
 
+    public void freeUpMexSpot(AIFloat3 location, DJAI ai){
+        for(int y=0;y<m_Resources.length;y++){
+                if(m_Resources[y].m_Resource.getName().equals("Metal")){
+                    m_Resources[y].freeUpMexSpot(location, ai);
+                    break;
+                }
+            }
+    }
+
     public List<ResourceSquare> MexSpots(){
          for(int y=0;y<m_Resources.length;y++){
                 if(m_Resources[y].m_Resource.getName().equals("Metal")){
@@ -76,7 +85,7 @@ public class ResourceHandler {
             for(int y=0;y<m_Resources.length;y++){
                 if(unitDef.getExtractsResource(m_Resources[y].m_Resource)>0){
                     ai.sendTextMsg("looking for resource:" +m_Resources[y].m_Resource.getName());
-                    return m_Resources[y].getNearestLocation(currPos, ai);
+                    return m_Resources[y].getNearestLocation(currPos, ai, true).ExactLocation;
                 }
             }
             

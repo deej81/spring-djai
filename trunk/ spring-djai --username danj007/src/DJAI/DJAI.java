@@ -265,7 +265,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
   }
 
   @Override public int update(int frame) {
-        if (frame % 600 == 0) {
+        if (frame % 300 == 0) {
             sendTextMsg("Update Time yeah!");
              try{
                  distributeAttackers(frame);
@@ -337,6 +337,11 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     @Override
 	public int unitDestroyed(Unit unit, Unit attacker) {
         sendTextMsg("unitDestroyed");
+        if(unit.getDef().getName().equals("armmex")){
+            sendTextMsg("freed mex spot");
+            m_ResourceHandler.freeUpMexSpot(unit.getPos(), this);
+
+        }
         try{
             for(DJAIUnit u:units){
             if(u.SpringUnit==null) {
