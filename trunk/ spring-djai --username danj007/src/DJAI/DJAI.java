@@ -216,20 +216,20 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                                     
                                     sendTextMsg("creating attack command");
                                     AICommand command;
-                                    if(enemy.SpringUnit.getDef()==null){
+                                    //if(enemy.SpringUnit.getDef()==null){
                                         //no idea about this attack it
                                         if(enemy.SpringUnit.getPos().x==0){
                                             enemies.remove(enemy);
                                             break;
 
-                                        }else{
-                                            command = new AttackUnitAICommand(unit.SpringUnit, 0,new ArrayList(), 1000, enemy.SpringUnit);
-                                        }
+                                        }//else{
+                                            //command = new AttackUnitAICommand(unit.SpringUnit, 0,new ArrayList(), 1000, enemy.SpringUnit);
+                                        //}
 
-                                    }else{
+                                   // }else{
                                         command = new MoveUnitAICommand(unit.SpringUnit, 0,new ArrayList(), 1000, enemy.SpringUnit.getPos());
 
-                                    }
+                                   // }
                                     
                                     int retVal = this.m_Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
                                     //sendTextMsg("ATTACKING: " +enemy.getDef().getName());
