@@ -60,18 +60,15 @@ public class DJAIResource {
             left,up,right,down
            
     }
-    public AIFloat3 getNearestLocation(AIFloat3 currPos, DJAI ai){
-        
-        //int x = (int)currPos.x/8;
-        //int y = (int)currPos.z/8;
-        //ai.sendTextMsg("current position is: "+String.valueOf(x)+" X "+String.valueOf(y));
 
-        //int maxRange = 100;
-        //int shifts=1;
-        //int doneShifts=0;
-        //int fullPass=0;
-       // search dir=search.left;
-       // Boolean squareUsed = false;
+    public void freeUpMexSpot(AIFloat3 location, DJAI ai){
+        getNearestLocation(location, ai, false);
+    }
+
+
+    public ResourceSquare getNearestLocation(AIFloat3 currPos, DJAI ai, Boolean occupy){
+        
+       
         
         double currBest=-1;
         int currIndex=0;
@@ -96,80 +93,11 @@ public class DJAIResource {
         if(currentChoice==null){
             return null;
         }else{
-            m_Squares.get(selIndex).Occupied=true;
-            return currentChoice.ExactLocation;
+            m_Squares.get(selIndex).Occupied=occupy;
+            return currentChoice;
 
         }
 
-
-        
-//        while(m_LocationsMap[x][y]==null||squareUsed){
-//            if(shifts>maxRange) break;
-//
-//            switch(dir){
-//                case left:
-//                    if(doneShifts==shifts){
-//                        dir=search.up;
-//                        doneShifts=0;
-//                        break;
-//                    }
-//                    x-=1;
-//                    doneShifts++;
-//                    if(x<0) x=0;
-//                    break;
-//                case up:
-//                     if(doneShifts==shifts){
-//                        dir=search.right;
-//                        doneShifts=0;
-//                        break;
-//                    }
-//                    y-=1;
-//                    doneShifts++;
-//                    if(y<0) y=0;
-//                    break;
-//                case right:
-//
-//                     if(doneShifts==0) shifts++;
-//                     if(doneShifts==shifts){
-//                        dir=search.down;
-//                        doneShifts=0;
-//                        break;
-//                    }
-//
-//                    x+=1;
-//                    doneShifts++;
-//                    if(x>=m_LocationsMap.length) x=m_LocationsMap.length-1;
-//                    break;
-//
-//                case down:
-//
-//                     if(doneShifts==shifts){
-//                        dir=search.left;
-//                        doneShifts=0;
-//                        fullPass++;
-//                        shifts++;
-//                        break;
-//                    }
-//
-//                    y+=1;
-//                    doneShifts++;
-//                    if(y>=m_LocationsMap[x].length) y= m_LocationsMap[x].length-1;
-//                    break;
-//
-//            }
-//
-//             ai.sendTextMsg("searching: "+String.valueOf(x)+" X "+String.valueOf(y));
-//
-//            if(m_LocationsMap[x][y]==null){
-//                squareUsed=false;
-//            }else{
-//                ai.sendTextMsg("Found At: "+String.valueOf(x)+" X "+String.valueOf(y)+" is occupied: "+String.valueOf(m_LocationsMap[x][y].Occupied));
-//                squareUsed=m_LocationsMap[x][y].Occupied;
-//            }
-//        }
-//        ai.sendTextMsg("Returning: "+String.valueOf(x)+" X "+String.valueOf(y));
-//        m_LocationsMap[x][y].Occupied = true;
-//        return m_LocationsMap[x][y].ExactLocation;
         
     }
 
