@@ -31,6 +31,7 @@ public class DJAIUnit{
     public Boolean IsExtractor=false;
 
     public Boolean IsFactoryOnWait=false;
+    public Boolean IsBuilderDoingGuard=false;
 
     public DJAIUnit(Unit springUnit){
         SpringUnit = springUnit;
