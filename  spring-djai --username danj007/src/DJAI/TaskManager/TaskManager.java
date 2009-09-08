@@ -164,11 +164,14 @@ public class TaskManager {
         }
 
         switch(UnitNames.valueOf(name)){
-            case armcom: case armck:
+            case armcom:
                 String[] ret = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex"};
                 return ret;
+            case armck:
+                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex"};
+                return ret3;
             case armlab:
-                String[] ret2 = {"armck","armpw","armjeth","armpw","armwar","armpw","armpw","armwar","armpw","armpw","armpw"};
+                String[] ret2 = {"armck","armpw","armjeth","armpw","armwar","armck","armpw","armpw","armwar","armpw","armwar","armpw","armwar","armwar"};
                 return ret2;
             default:
                 ai.sendTextMsg("no list found for: "+name);
