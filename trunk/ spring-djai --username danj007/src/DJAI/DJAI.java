@@ -18,6 +18,7 @@ import com.springrts.ai.AIFloat3;
 import com.springrts.ai.command.AttackAreaUnitAICommand;
 import com.springrts.ai.command.AttackUnitAICommand;
 import com.springrts.ai.command.BuildUnitAICommand;
+import com.springrts.ai.command.CallLuaRulesAICommand;
 import com.springrts.ai.command.GuardUnitAICommand;
 import com.springrts.ai.command.MoveUnitAICommand;
 import com.springrts.ai.command.SendTextMessageAICommand;
@@ -34,7 +35,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     private ResourceHandler m_ResourceHandler = new ResourceHandler();
     private TaskManager m_TaskManager = new TaskManager();
     private static final int DEFAULT_ZONE = 0;
-    private List<DJAIUnit> units = new ArrayList();
+    public List<DJAIUnit> units = new ArrayList();
     private List<DJAIEnemyUnit> enemies = new ArrayList();
     private AIFloat3 basePos;
     private Boolean m_FirstFactory=true;
@@ -125,14 +126,20 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                     unit.IsFactoryOnWait=false;
                     m_TaskManager.allocateTaskToUnit(unit, m_ResourceHandler, this);
                 }
+            }else if(unit.IsBuilder){
+                if(unit.IsBuilderDoingGuard){
+                    unit.IsBuilderDoingGuard=false;
+                    m_TaskManager.allocateTaskToUnit(unit, m_ResourceHandler, this);
+                }
             }
+
         }
     }
 
   
 
   private void distributeAttackers(int frame){
-      int boost=frame/15000;
+      int boost=frame/20000;
       int maxAttackers=3+boost;
              int attackers=0;
              sendTextMsg("Enemy Count: "+String.valueOf(enemies.size()));
@@ -178,26 +185,25 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
                         }
 
-                        if(unit.IsAttacker&&frame-unit.FrameCommand>6000){
+                        if(unit.IsAttacker&&frame-unit.FrameCommand>3000){
                                  try{
                                     
                                     sendTextMsg("creating attack command");
                                     AICommand command;
-                                    //if(enemy.SpringUnit.getDef()==null){
+                                    if(enemy.SpringUnit.getDef()==null){
                                         //no idea about this attack it
                                         if(enemy.SpringUnit.getPos().x==0){
                                             //enemies.remove(enemy);
                                             sendTextMsg("no enemy position");
                                             break;
 
-                                        }//else{
-                                            //command = new AttackUnitAICommand(unit.SpringUnit, 0,new ArrayList(), 1000, enemy.SpringUnit);
-                                        //}
+                                        }else{
+                                            command = new AttackUnitAICommand(unit.SpringUnit, 0,new ArrayList(), 1000, enemy.SpringUnit);
+                                        }
 
-                                   // }else{
+                                    }else{
                                         command = new MoveUnitAICommand(unit.SpringUnit, 0,new ArrayList(), 1000, enemy.SpringUnit.getPos());
-
-                                   // }
+                                    }
                                     
                                     int retVal = this.Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
                                     //sendTextMsg("ATTACKING: " +enemy.getDef().getName());

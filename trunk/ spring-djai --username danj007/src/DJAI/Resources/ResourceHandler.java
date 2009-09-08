@@ -140,5 +140,23 @@ public class ResourceHandler {
             return false;
     }
 
+    public boolean resourcesArePlentifull(DJAI ai){
+        List<Resource> resources = ai.Callback.getResources();
+	for (Resource resource : resources) {
+                float currentUsage = ai.Callback.getEconomy().getUsage(resource)-ai.Callback.getEconomy().getIncome(resource);
+                float storage = ai.Callback.getEconomy().getStorage(resource);
+                float current = ai.Callback.getEconomy().getCurrent(resource);
+
+                double percOfStor = current/storage;
+
+                if(currentUsage>0||percOfStor<0.85){
+                    return false;
+                }
+
+        }
+        return true;
+
+    }
+
 
 }

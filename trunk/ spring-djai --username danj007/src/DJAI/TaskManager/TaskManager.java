@@ -8,6 +8,7 @@ package DJAI.TaskManager;
 import DJAI.DJAI;
 import DJAI.DJAIUnit;
 import DJAI.Resources.ResourceHandler;
+import DJAI.Utilities.VectorUtils;
 import com.springrts.ai.AICommand;
 import com.springrts.ai.AICommandWrapper;
 import com.springrts.ai.AIFloat3;
@@ -64,6 +65,33 @@ public class TaskManager {
         buildUnit(unit, toBuild, resourceHandler ,ai);
         return 0;
     }
+    
+    private boolean findNearestFactoryAndAssist(DJAIUnit unit, DJAI ai){
+        DJAIUnit fact=null;
+        double distance=-1;
+        for(DJAIUnit poss: ai.units){
+            if(poss.IsFactory){
+                double pDist= VectorUtils.CalcDistance(unit.SpringUnit.getPos(), poss.SpringUnit.getPos());
+                if(distance==-1||pDist  <distance){
+                    fact=poss;
+                    distance=pDist;
+                }
+            }
+        }
+        
+       if(distance==-1) return false;
+        try{
+           AICommand command = new GuardUnitAICommand(unit.SpringUnit,0,new ArrayList(), 1000, fact.SpringUnit);
+           ai.Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE,
+           -1, command);
+           unit.IsBuilderDoingGuard=true;
+           return true;
+        }catch(Exception ex){
+            ai.sendTextMsg("error creating guard: "+ex.getMessage());
+            return false;
+        }
+
+    }
 
     private void buildUnit(DJAIUnit unit, UnitDef toBuild, ResourceHandler resourceHandler, DJAI ai) {
         ai.sendTextMsg("looking for build spot");
@@ -78,7 +106,7 @@ public class TaskManager {
     }
 
     public enum UnitNames{
-        armcom,armlab,armck;
+        armcom,armlab,armck,armvp,armcv,armalab,armack;
     }
 
     public int allocateTaskToUnit(DJAIUnit unit, ResourceHandler resourceHandler, DJAI ai){
@@ -100,6 +128,13 @@ public class TaskManager {
            }
         }else if(unit.IsBuilder){
             ai.sendTextMsg("builder job for:" + unit.SpringUnit.getDef().getName());
+            if(resourceHandler.resourcesArePlentifull(ai)&&m_Rand.nextInt(3)>2){
+                ai.sendTextMsg("finding guard pos for:" + unit.SpringUnit.getDef().getName());
+                if(findNearestFactoryAndAssist(unit,ai)){
+                    return 0;
+                }
+            }
+            
             if(resourceHandler.shortOnResource(ai)){
                 Resource mostNeeded = resourceHandler.getMostNeededResource(ai);
                 UnitDef bestUnit = null;
@@ -158,21 +193,35 @@ public class TaskManager {
         String[] list = null;
 
         if(unit.getDef().isBuilder()){
+
             for(UnitDef def: unit.getDef().getBuildOptions()){
-               //ai.sendTextMsg("unit: " + unit.getDef().getName()+ " can build: "+ def.getName());
+               ai.sendTextMsg("unit: " + unit.getDef().getName()+ " can build: "+ def.getName());
+
             }
         }
 
         switch(UnitNames.valueOf(name)){
             case armcom:
-                String[] ret = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex"};
+                String[] ret = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex","armvp"};
                 return ret;
             case armck:
-                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex"};
+                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex","armalab"};
                 return ret3;
             case armlab:
                 String[] ret2 = {"armck","armpw","armjeth","armpw","armwar","armck","armpw","armpw","armwar","armpw","armwar","armpw","armwar","armwar"};
                 return ret2;
+            case armvp:
+                String[] ret4 =  {"armflash","armflash","armflash","armstump"};
+                return ret4;
+            case armcv:
+                String[] ret5 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex"};
+                return ret5;
+            case armalab:
+                String[] ret6 = {"armack","armzeus","armfido","armzeus","armzeus","armfido","armzeus","armzeus","armfido"};
+                return ret6;
+            case armack:
+                String[] ret7 = {"armarad","armfus","armmmkr","armmmkr"};
+                return ret7;
             default:
                 ai.sendTextMsg("no list found for: "+name);
                 break;
