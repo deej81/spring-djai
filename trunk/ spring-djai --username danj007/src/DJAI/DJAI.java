@@ -71,7 +71,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     units.add(newUnit);
     try{
         if(unit.getDef().getName().equals("armpw")){
-            if(m_Rand.nextInt(10)==0||units.size()<15) {
+            if(m_Rand.nextInt(10)==0||units.size()<20) {
                 sendTextMsg("scout created");
                 newUnit.IsScouter=true;
                 newUnit.IsAttacker=false;
