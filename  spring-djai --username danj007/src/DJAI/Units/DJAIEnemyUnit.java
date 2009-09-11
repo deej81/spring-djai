@@ -3,8 +3,9 @@
  * and open the template in the editor.
  */
 
-package DJAI;
+package DJAI.Units;
 
+import DJAI.Units.DJAIUnit;
 import com.springrts.ai.oo.Unit;
 import java.util.ArrayList;
 import java.util.List;

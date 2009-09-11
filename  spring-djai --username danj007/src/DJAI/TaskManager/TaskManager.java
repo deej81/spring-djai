@@ -6,7 +6,7 @@
 package DJAI.TaskManager;
 
 import DJAI.DJAI;
-import DJAI.DJAIUnit;
+import DJAI.Units.DJAIUnit;
 import DJAI.Resources.ResourceHandler;
 import DJAI.Utilities.VectorUtils;
 import com.springrts.ai.AICommand;
@@ -40,7 +40,7 @@ public class TaskManager {
 
         unit.BuildIndex++;
         if(unit.BuildIndex==list.length){
-            if(unit.IsCommander){
+            if(unit.DJUnitDef.IsCommander){
                 AICommand command = new GuardUnitAICommand(unit.SpringUnit,0,new ArrayList(), 1000, ai.FirstFactoryUnit );
                 try{
                     return ai.Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
@@ -70,7 +70,7 @@ public class TaskManager {
         DJAIUnit fact=null;
         double distance=-1;
         for(DJAIUnit poss: ai.units){
-            if(poss.IsFactory){
+            if(poss.DJUnitDef.IsFactory){
                 double pDist= VectorUtils.CalcDistance(unit.SpringUnit.getPos(), poss.SpringUnit.getPos());
                 if(distance==-1||pDist  <distance){
                     fact=poss;
@@ -111,9 +111,9 @@ public class TaskManager {
 
     public int allocateTaskToUnit(DJAIUnit unit, ResourceHandler resourceHandler, DJAI ai){
         ai.sendTextMsg("task needed for:" + unit.SpringUnit.getDef().getName());
-        if(unit.IsAttacker) return 0; //leave to attack handler
+        if(unit.DJUnitDef.IsAttacker) return 0; //leave to attack handler
 
-        if(unit.IsScouter){
+        if(unit.DJUnitDef.IsScouter){
             ai.sendTextMsg("scout job for:" + unit.SpringUnit.getDef().getName());
             try{
                int rand = m_Rand.nextInt(resourceHandler.MexSpots().size());
@@ -126,7 +126,7 @@ public class TaskManager {
                 ai.sendTextMsg("scout command failed: "+ex.getMessage());
 
            }
-        }else if(unit.IsBuilder){
+        }else if(unit.DJUnitDef.IsBuilder){
             ai.sendTextMsg("builder job for:" + unit.SpringUnit.getDef().getName());
             if(resourceHandler.resourcesArePlentifull(ai)&&m_Rand.nextInt(3)>2){
                 ai.sendTextMsg("finding guard pos for:" + unit.SpringUnit.getDef().getName());
@@ -163,7 +163,7 @@ public class TaskManager {
             }else{
                 return allocateUnitToNextTask(unit, resourceHandler, ai);
             }
-        }else if(unit.IsFactory){
+        }else if(unit.DJUnitDef.IsFactory){
             ai.sendTextMsg("factory job for:" + unit.SpringUnit.getDef().getName());
             if(resourceHandler.shortOnResource(ai)){
                 //make factory wait. Update frame in DJAI will wake it
