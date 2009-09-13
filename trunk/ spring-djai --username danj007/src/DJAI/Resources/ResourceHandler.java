@@ -6,6 +6,8 @@
 package DJAI.Resources;
 
 import DJAI.DJAI;
+import DJAI.Units.DJAIUnit;
+import DJAI.Units.DJAIUnitDef;
 import com.springrts.ai.AIFloat3;
 import com.springrts.ai.oo.OOAICallback;
 import com.springrts.ai.oo.Resource;
@@ -99,12 +101,12 @@ public class ResourceHandler {
 
     }
     
-    public AIFloat3 getSpotforUnit(UnitDef unitDef, OOAICallback callback, AIFloat3 currPos, DJAI ai){
-        ai.sendTextMsg("looking for spot for:" +unitDef.getName());
+    public AIFloat3 getSpotforUnit(DJAIUnitDef unitDef,UnitDef springDef, OOAICallback callback, AIFloat3 currPos, DJAI ai){
+        ai.sendTextMsg("looking for spot for:" +springDef.getName());
         //is this a resource extractor
-        if(unitDef.getName().equals("armmex")){
+        if(unitDef.IsExtractor){
             for(int y=0;y<m_Resources.length;y++){
-                if(unitDef.getExtractsResource(m_Resources[y].m_Resource)>0){
+                if(springDef.getExtractsResource(m_Resources[y].m_Resource)>0){
                     ai.sendTextMsg("looking for resource:" +m_Resources[y].m_Resource.getName());
                     return m_Resources[y].getNearestLocation(currPos, ai, true).ExactLocation;
                 }
@@ -116,11 +118,19 @@ public class ResourceHandler {
             
         }else{
             
-            return callback.getMap().findClosestBuildSite(unitDef, currPos, 1000, 5, 0);
+            return callback.getMap().findClosestBuildSite(springDef, currPos, 1000, 5, 0);
             
         }
         
         
+    }
+
+    public boolean checkResourceRequirements(List<ResourceRequirement> requirements,DJAI ai){
+        for(ResourceRequirement requirement: requirements){
+            if(!checkResourceRequirement(requirement,ai)) return false;
+        }
+
+        return true;
     }
 
     public boolean shortOnResource(DJAI ai) {
@@ -142,7 +152,7 @@ public class ResourceHandler {
 
     public boolean resourcesArePlentifull(DJAI ai){
         List<Resource> resources = ai.Callback.getResources();
-	for (Resource resource : resources) {
+        for (Resource resource : resources) {
                 float currentUsage = ai.Callback.getEconomy().getUsage(resource)-ai.Callback.getEconomy().getIncome(resource);
                 float storage = ai.Callback.getEconomy().getStorage(resource);
                 float current = ai.Callback.getEconomy().getCurrent(resource);
@@ -156,6 +166,32 @@ public class ResourceHandler {
         }
         return true;
 
+    }
+
+    public boolean checkResourceRequirement(ResourceRequirement requirement, DJAI ai) {
+        List<Resource> resources = ai.Callback.getResources();
+        for (Resource resource : resources) {
+
+            if(resource.getName().equals(requirement.RequiredResource)){
+                float income = ai.Callback.getEconomy().getIncome(resource);
+                float surplus = income -ai.Callback.getEconomy().getUsage(resource);
+                float current = ai.Callback.getEconomy().getCurrent(resource);
+
+                if(income<requirement.RequiredIncome) return false;
+                ai.sendTextMsg("Income OK");
+                if(requirement.MaxIncome!=-1&&income>requirement.MaxIncome) return false;
+                ai.sendTextMsg("Max Income OK");
+                if(current<requirement.RequiredTotal) return false;
+                ai.sendTextMsg("Total OK");
+                if(requirement.MaxTotal!=-1&&income>requirement.MaxTotal) return false;
+                ai.sendTextMsg("Max Total OK");
+                if(surplus<requirement.RequiredSurplus) return false;
+                ai.sendTextMsg("Surplus OK");
+            }
+
+        }
+
+        return true;
     }
 
 

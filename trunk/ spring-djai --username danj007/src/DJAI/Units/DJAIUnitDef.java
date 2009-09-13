@@ -5,11 +5,13 @@
 
 package DJAI.Units;
 
+import DJAI.DJAI;
 import DJAI.Resources.ResourceRequirement;
 import com.springrts.ai.oo.Resource;
 import com.springrts.ai.oo.UnitDef;
 import java.util.ArrayList;
 import java.util.List;
+import org.omg.CosNaming.NamingContextExtPackage.StringNameHelper;
 
 /**
  *
@@ -29,13 +31,19 @@ public class DJAIUnitDef {
     public boolean SoloBuild=false;
     public List<ResourceRequirement> ResourceRequirements = new ArrayList();
 
-    public UnitDef SpringDef;
+    public int SpringDefID;
+    public String SpringName;
 
     //possible unitdef id to ease loading?
 
     public String[] BuildList;
 
+
+
     public void createFromSpringDef(UnitDef springDef, List<Resource> gameResources){
+
+        SpringDefID=springDef.getUnitDefId();
+        SpringName=springDef.getName();
 
         IsCommander = springDef.isCommander();
         IsFactory = springDef.getSpeed()==0&&springDef.getBuildOptions().size()>0;
@@ -47,7 +55,19 @@ public class DJAIUnitDef {
                 IsExtractor=true;
                 break;
             }
+
+            ResourceRequirement req = new ResourceRequirement();
+            req.RequiredResource = resource.getName();
+            req.MaxIncome=-1;
+            req.MaxTotal=-1;
+            req.RequiredIncome=0;
+            req.RequiredSurplus=0;
+            req.RequiredTotal=0;
+
+            ResourceRequirements.add(req);
         }
+
+
 
 
 
