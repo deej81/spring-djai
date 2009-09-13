@@ -12,7 +12,7 @@ import com.springrts.ai.oo.Resource;
  * @author deej
  */
 public class ResourceRequirement {
-    public Resource RequiredResource;
+    public String RequiredResource;
     public int RequiredIncome;
     public int RequiredTotal;
     public int RequiredSurplus;

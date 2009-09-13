@@ -36,7 +36,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
     public OOAICallback Callback;
     private Unit commander;
-    private ResourceHandler m_ResourceHandler = new ResourceHandler();
+    public ResourceHandler ResourceHandler = new ResourceHandler();
     private TaskManager m_TaskManager = new TaskManager();
     private static final int DEFAULT_ZONE = 0;
     public List<DJAIUnit> units = new ArrayList();
@@ -55,7 +55,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 	public int sendTextMsg(String msg) {
 
 		//SendTextMessageAICommand msgCmd
-			//= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
+		//	= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
 		//return handleEngineCommand(msgCmd);
         return 0;
 	}
@@ -65,32 +65,20 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
       DefManager = new DJAIUnitDefManager(this);
       loadModInfo();
       sendTextMsg("creating resource handler");
-      m_ResourceHandler.initializeResources(Callback,this);
+      ResourceHandler.initializeResources(Callback,this);
       sendTextMsg("resource handler created");
       return 0;
   }
 
   @Override public int unitFinished(Unit unit) {
 
-      DJAIUnitDef def = new DJAIUnitDef();
-      def.createFromSpringDef(unit.getDef(), Callback.getResources());
+    DJAIUnitDef def = DefManager.getUnitDefForUnit(unit.getDef());
 
     DJAIUnit newUnit = new DJAIUnit(unit, def);
     sendTextMsg("unit IsFactory: "+String.valueOf(newUnit.DJUnitDef.IsFactory));
     units.add(newUnit);
 
-    try{
-        if(unit.getDef().getName().equals("armpw")){
-            if(m_Rand.nextInt(10)==0||units.size()<20) {
-                sendTextMsg("scout created");
-                newUnit.DJUnitDef.IsScouter=true;
-                newUnit.DJUnitDef.IsAttacker=false;
-            }
-        }
-    }catch(Exception ex){
-        sendTextMsg("error creating scout: "+ex.getMessage());
-    }
-
+    
     if (unit.getDef().getName().equals("armcom")){
        this.commander = unit;
        basePos = unit.getPos();
@@ -103,7 +91,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     }
 
     
-    m_TaskManager.allocateTaskToUnit(newUnit, m_ResourceHandler, this);
+    m_TaskManager.allocateTaskToUnit(newUnit, ResourceHandler, this);
     return 0;
 }
 
@@ -112,7 +100,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
             try{
                 for(DJAIUnit djUn: units){
                     if(unit.equals(djUn.SpringUnit)){
-                        m_TaskManager.allocateTaskToUnit(djUn, m_ResourceHandler, this);
+                        m_TaskManager.allocateTaskToUnit(djUn, ResourceHandler, this);
                         break;
                     }
                 }
@@ -133,12 +121,12 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                 if(unit.IsFactoryOnWait){
                     sendTextMsg("waiting factory unleashed");
                     unit.IsFactoryOnWait=false;
-                    m_TaskManager.allocateTaskToUnit(unit, m_ResourceHandler, this);
+                    m_TaskManager.allocateTaskToUnit(unit, ResourceHandler, this);
                 }
             }else if(unit.DJUnitDef.IsBuilder){
                 if(unit.IsBuilderDoingGuard){
                     unit.IsBuilderDoingGuard=false;
-                    m_TaskManager.allocateTaskToUnit(unit, m_ResourceHandler, this);
+                    m_TaskManager.allocateTaskToUnit(unit, ResourceHandler, this);
                 }
             }
 
@@ -257,7 +245,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
             
              sendTextMsg("Update Complete");
         }
-        if (frame % 400 == 0) {
+        if (frame % 200 == 0) {
 
             checkForEnableWaitingFactories();
         }
@@ -323,9 +311,9 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     @Override
 	public int unitDestroyed(Unit unit, Unit attacker) {
         sendTextMsg("unitDestroyed");
-        if(unit.getDef().getName().equals("armmex")){
+        if(DefManager.getUnitDefForUnit(unit.getDef()).IsExtractor){
             sendTextMsg("freed mex spot");
-            m_ResourceHandler.freeUpMexSpot(unit.getPos(), this);
+            ResourceHandler.freeUpMexSpot(unit.getPos(), this);
 
         }
         try{
