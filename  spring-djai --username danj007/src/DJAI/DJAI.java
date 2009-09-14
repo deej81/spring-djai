@@ -168,7 +168,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                      sendTextMsg("In Enemy Loop 3");
                      sendTextMsg("current number of units: "+String.valueOf(units.size()));
 
-                    for(DJAIUnit unit : units){
+                    for(int i=units.size()-1;i>=0;i--){
+                        DJAIUnit unit = units.get(i);
                         sendTextMsg("In Attackers Loop");
                         //if(frame-unit.FrameCommand>60000){
                            //unit.Attaking=null;
