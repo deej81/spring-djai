@@ -101,7 +101,7 @@ public class ResourceHandler {
 
     }
     
-    public AIFloat3 getSpotforUnit(DJAIUnitDef unitDef,UnitDef springDef, OOAICallback callback, AIFloat3 currPos, DJAI ai){
+    public AIFloat3 getSpotforUnit(DJAIUnit builder, DJAIUnitDef unitDef,UnitDef springDef, OOAICallback callback, AIFloat3 currPos, DJAI ai){
         ai.sendTextMsg("looking for spot for:" +springDef.getName());
         //is this a resource extractor
         if(unitDef.IsExtractor){
@@ -118,7 +118,12 @@ public class ResourceHandler {
             
         }else{
             
-            return callback.getMap().findClosestBuildSite(springDef, currPos, 1000, 5, 0);
+            if(!builder.DJUnitDef.IsCommander&& builder.SpringUnit.getDef().getTechLevel()<springDef.getTechLevel()){
+                return callback.getMap().findClosestBuildSite(springDef, ai.basePos, 1000, 20, 0);
+            }else{
+                return callback.getMap().findClosestBuildSite(springDef, currPos, 1000, 5, 0);
+            }
+
             
         }
         
@@ -181,7 +186,11 @@ public class ResourceHandler {
                 ai.sendTextMsg("Income OK");
                 if(requirement.MaxIncome!=-1&&income>requirement.MaxIncome) return false;
                 ai.sendTextMsg("Max Income OK");
-                if(current<requirement.RequiredTotal) return false;
+                if(current<requirement.RequiredTotal){
+                    //check we actually have the possibility of having enough!
+                    if(ai.Callback.getEconomy().getStorage(resource)>requirement.RequiredTotal)
+                        return false;
+                }
                 ai.sendTextMsg("Total OK");
                 if(requirement.MaxTotal!=-1&&income>requirement.MaxTotal) return false;
                 ai.sendTextMsg("Max Total OK");

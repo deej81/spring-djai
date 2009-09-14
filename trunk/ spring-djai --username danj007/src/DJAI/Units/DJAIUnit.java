@@ -25,6 +25,8 @@ public class DJAIUnit{
 
     public DJAIUnitDef DJUnitDef;
 
+    public DJAIUnitDef CurrentlyBuildingDef;
+
     public Boolean IsFactoryOnWait=false;
     public Boolean IsBuilderDoingGuard=false;
 

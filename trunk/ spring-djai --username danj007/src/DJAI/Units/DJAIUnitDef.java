@@ -50,6 +50,8 @@ public class DJAIUnitDef {
         IsBuilder = springDef.isBuilder()&&!IsFactory;
         IsAttacker = springDef.isAbleToFight()&&!IsCommander&&!IsFactory&&!IsBuilder;
 
+        SoloBuild=IsFactory;
+
         for(Resource resource:gameResources){
             if(springDef.getExtractsResource(resource)>0) {
                 IsExtractor=true;
@@ -62,7 +64,7 @@ public class DJAIUnitDef {
             req.MaxTotal=-1;
             req.RequiredIncome=0;
             req.RequiredSurplus=0;
-            req.RequiredTotal=0;
+            req.RequiredTotal = (int)springDef.getCost(resource);
 
             ResourceRequirements.add(req);
         }
