@@ -42,8 +42,11 @@ public class TaskManager {
         DJAIUnitDef djDef= ai.DefManager.getUnitDefForUnit(list[unit.BuildIndex]);
         ai.sendTextMsg("checking resource reqs for: "+djDef.SpringName);
 
-        if(ai.ResourceHandler.checkResourceRequirements(djDef.ResourceRequirements, ai)){
+        if(ai.ResourceHandler.checkResourceRequirements(djDef.ResourceRequirements, ai)
+                && (( ai.DJUnitManager.amIBuilding(djDef) && ! djDef.SoloBuild) || ! ai.DJUnitManager.amIBuilding(djDef)) ){
                 ai.sendTextMsg("building is ok to go: "+djDef.SpringName);
+                unit.CurrentlyBuildingDef = djDef;
+                ai.DJUnitManager.UnitBuildingStarted(djDef);
                 buildID = list[unit.BuildIndex];
                 unit.BuildIndex++;
         }else{
@@ -51,6 +54,8 @@ public class TaskManager {
             //buildResource(unit, resourceHandler, ai);
             if(unit.DJUnitDef.IsFactory) unit.IsFactoryOnWait=true;
             if(unit.DJUnitDef.IsBuilder) unit.IsBuilderDoingGuard=true;
+            if(unit.DJUnitDef.IsBuilder)
+                findNearestFactoryAndAssist(unit, ai);
             return 0;
         }
 
@@ -96,7 +101,7 @@ public class TaskManager {
             if (def.getName().equals(buildID))
             {
                  toBuild = def;
-                    break;
+                 break;
             }
 
         buildUnit(unit, toBuild, resourceHandler ,ai);
@@ -132,7 +137,8 @@ public class TaskManager {
 
     private void buildUnit(DJAIUnit unit, UnitDef toBuild, ResourceHandler resourceHandler, DJAI ai) {
         ai.sendTextMsg("looking for build spot");
-        
+        if(unit.DJUnitDef.IsFactory) unit.IsFactoryOnWait=false;
+        if(unit.DJUnitDef.IsBuilder) unit.IsBuilderDoingGuard=false;
         DJAIUnitDef toB =null;
         try{
 
@@ -142,7 +148,7 @@ public class TaskManager {
         }
         
 
-        AIFloat3 buildPos = resourceHandler.getSpotforUnit(toB,toBuild, ai.Callback, unit.SpringUnit.getPos(),ai);
+        AIFloat3 buildPos = resourceHandler.getSpotforUnit(unit,toB,toBuild, ai.Callback, unit.SpringUnit.getPos(),ai);
 
        if(buildPos==null) return;
        AICommand command = new BuildUnitAICommand(unit.SpringUnit, -1,
@@ -175,6 +181,7 @@ public class TaskManager {
            }
         }else if(unit.DJUnitDef.IsBuilder){
             ai.sendTextMsg("builder job for:" + unit.SpringUnit.getDef().getName());
+            unit.CurrentlyBuildingDef = null;
             if(resourceHandler.resourcesArePlentifull(ai)){
                 ai.sendTextMsg("finding guard pos for:" + unit.SpringUnit.getDef().getName());
                 if(findNearestFactoryAndAssist(unit,ai)){
@@ -190,6 +197,7 @@ public class TaskManager {
             }
         }else if(unit.DJUnitDef.IsFactory){
             ai.sendTextMsg("factory job for:" + unit.SpringUnit.getDef().getName());
+            unit.CurrentlyBuildingDef = null;
             if(resourceHandler.shortOnResource(ai)){
                 //make factory wait. Update frame in DJAI will wake it
                 ai.sendTextMsg("factory waiting...");
@@ -253,19 +261,19 @@ public class TaskManager {
 
         switch(UnitNames.valueOf(name)){
             case armcom:
-                String[] ret = {"armmex","armsolar","armsolar","armlab","armrad","armmex","armmex","armsolar","armmex","armvp"};
+                String[] ret = {"armmex","armsolar","armsolar","armmex","armlab","armrad","armmex","armmex","armsolar","armmex","armsolar","armsolar","armvp","armsolar"};
                 return ret;
             case armck:
                 String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armalab"};
                 return ret3;
             case armlab:
-                String[] ret2 = {"armck","armflea","armjeth","armpw","armwar","armck","armpw","armpw","armwar","armpw","armwar","armpw","armwar","armwar"};
+                String[] ret2 = {"armck","armpw","armjeth","armpw","armwar","armham","armham","armwar","armck","armpw","armwar","armham","armwar","armwar"};
                 return ret2;
             case armvp:
-                String[] ret4 =  {"armflash","armflash","armflash","armstump"};
+                String[] ret4 =  {"armflash","armflash","armflash","armstump","armcv","armflash","armflash","armflash","armstump"};
                 return ret4;
             case armcv:
-                String[] ret5 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex"};
+                String[] ret5 = {"armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex"};
                 return ret5;
             case armalab:
                 String[] ret6 = {"armack","armzeus","armfido","armzeus","armzeus","armfido","armzeus","armzeus","armfido"};
