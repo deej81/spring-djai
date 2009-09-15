@@ -32,6 +32,39 @@ public class TaskManager {
 
     private Random m_Rand = new Random();
 
+    private boolean checkExceedsMaxBuildCount(DJAIUnit unit, DJAIUnitDef def, DJAI ai){
+        ai.sendTextMsg("checking max build count");
+        if(def.MaxBuildNumber!=-1){
+            int current = ai.DJUnitManager.CurrentUnitCount(def);
+            if(current>def.MaxBuildNumber){
+                ai.sendTextMsg("max build exceeded");
+                return true;
+            }
+        }
+
+        
+        ai.sendTextMsg("checking solo build");
+        //another unit is allocated
+        if( ai.DJUnitManager.amIBuilding(def,ai) && def.SoloBuild){
+            //this is the unit allocated
+            ai.sendTextMsg("is solo build");
+
+            if(unit.CurrentlyBuildingDef==null){
+               ai.sendTextMsg("I have no build allocated to me, on we go");
+                return true;
+            }
+
+            if(unit.CurrentlyBuildingDef.SpringDefID==def.SpringDefID){
+                ai.sendTextMsg("unit is solo build but i'm the solo builder");
+                return false;
+            }
+            ai.sendTextMsg("not allocated to me, on we go");
+            return true;
+        }
+        ai.sendTextMsg("check passed");
+        return false;
+    }
+
     private int allocateUnitToNextTask(DJAIUnit unit, ResourceHandler resourceHandler, DJAI ai) {
         ai.sendTextMsg("finding unit to build");
         List<UnitDef> unitDefs = ai.Callback.getUnitDefs();
@@ -42,11 +75,18 @@ public class TaskManager {
         DJAIUnitDef djDef= ai.DefManager.getUnitDefForUnit(list[unit.BuildIndex]);
         ai.sendTextMsg("checking resource reqs for: "+djDef.SpringName);
 
-        if(ai.ResourceHandler.checkResourceRequirements(djDef.ResourceRequirements, ai)
-                && (( ai.DJUnitManager.amIBuilding(djDef) && ! djDef.SoloBuild) || ! ai.DJUnitManager.amIBuilding(djDef)) ){
+        while(checkExceedsMaxBuildCount(unit, djDef, ai)){
+            ai.sendTextMsg("exceeded maximum for this unit");
+            unit.BuildIndex++;
+            djDef= ai.DefManager.getUnitDefForUnit(list[unit.BuildIndex]);
+        }
+
+        if(ai.ResourceHandler.checkResourceRequirements(djDef.ResourceRequirements, ai)){
                 ai.sendTextMsg("building is ok to go: "+djDef.SpringName);
                 unit.CurrentlyBuildingDef = djDef;
-                ai.DJUnitManager.UnitBuildingStarted(djDef);
+                if(unit.CurrentlyBuildingDef!=djDef){
+                    ai.DJUnitManager.UnitBuildingStarted(djDef);
+                }
                 buildID = list[unit.BuildIndex];
                 unit.BuildIndex++;
         }else{
@@ -55,34 +95,19 @@ public class TaskManager {
             if(unit.DJUnitDef.IsFactory) unit.IsFactoryOnWait=true;
             if(unit.DJUnitDef.IsBuilder) unit.IsBuilderDoingGuard=true;
             if(unit.DJUnitDef.IsBuilder)
+                //notify UnitManager that this job is allocated here and we will wait to be able to build
+                ai.sendTextMsg("allocating job to unit and waiting");
+                if(unit.CurrentlyBuildingDef!=djDef){
+                    ai.DJUnitManager.AllocateUnitToBuild(unit, djDef, ai);
+                    ai.DJUnitManager.UnitBuildingStarted(djDef);
+                }
                 findNearestFactoryAndAssist(unit, ai);
             return 0;
         }
 
-        //boolean found=false;
-        //for(int i=unit.BuildIndex;i<list.length;i++){
-          //  DJAIUnitDef djDef= ai.DefManager.getUnitDefForUnit(list[i]);
-          //  if(ai.ResourceHandler.checkResourceRequirements(djDef.ResourceRequirements, ai)){
-           //     ai.sendTextMsg("building: "+djDef.SpringName);
-           //     found=true;
-           //     unit.BuildIndex=i;
-           //     break;
-          //  }else{
-          //      ai.sendTextMsg("not building: "+djDef.SpringName);
-          //  }
-        //}
-        
-        //if(found){
-            
-         //   unit.BuildIndex++;
-       // }else{
-         //   unit.IsBuilderDoingGuard=true;
-         //   return 0;
-       // }
-        
-
-        if(unit.BuildIndex==list.length){
+       if(unit.BuildIndex==list.length){
             if(unit.DJUnitDef.IsCommander){
+                unit.CurrentlyBuildingDef =null;
                 AICommand command = new GuardUnitAICommand(unit.SpringUnit,0,new ArrayList(), 1000, ai.FirstFactoryUnit );
                 try{
                     return ai.Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
@@ -111,7 +136,7 @@ public class TaskManager {
     private boolean findNearestFactoryAndAssist(DJAIUnit unit, DJAI ai){
         DJAIUnit fact=null;
         double distance=-1;
-        for(DJAIUnit poss: ai.units){
+        for(DJAIUnit poss: ai.DJUnitManager.Factories){
             if(poss.DJUnitDef.IsFactory){
                 double pDist= VectorUtils.CalcDistance(unit.SpringUnit.getPos(), poss.SpringUnit.getPos());
                 if(distance==-1||pDist  <distance){
@@ -159,7 +184,7 @@ public class TaskManager {
     }
 
     public enum UnitNames{
-        armcom,armlab,armck,armvp,armcv,armalab,armack;
+        armcom,armlab,armck,armvp,armcv,armalab,armack,armavp;
     }
 
     public int allocateTaskToUnit(DJAIUnit unit, ResourceHandler resourceHandler, DJAI ai){
@@ -181,7 +206,6 @@ public class TaskManager {
            }
         }else if(unit.DJUnitDef.IsBuilder){
             ai.sendTextMsg("builder job for:" + unit.SpringUnit.getDef().getName());
-            unit.CurrentlyBuildingDef = null;
             if(resourceHandler.resourcesArePlentifull(ai)){
                 ai.sendTextMsg("finding guard pos for:" + unit.SpringUnit.getDef().getName());
                 if(findNearestFactoryAndAssist(unit,ai)){
@@ -197,7 +221,6 @@ public class TaskManager {
             }
         }else if(unit.DJUnitDef.IsFactory){
             ai.sendTextMsg("factory job for:" + unit.SpringUnit.getDef().getName());
-            unit.CurrentlyBuildingDef = null;
             if(resourceHandler.shortOnResource(ai)){
                 //make factory wait. Update frame in DJAI will wake it
                 ai.sendTextMsg("factory waiting...");
@@ -264,23 +287,26 @@ public class TaskManager {
                 String[] ret = {"armmex","armsolar","armsolar","armmex","armlab","armrad","armmex","armmex","armsolar","armmex","armsolar","armsolar","armvp","armsolar"};
                 return ret;
             case armck:
-                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armalab"};
+                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armalab","armvp"};
                 return ret3;
             case armlab:
                 String[] ret2 = {"armck","armpw","armjeth","armpw","armwar","armham","armham","armwar","armck","armpw","armwar","armham","armwar","armwar"};
                 return ret2;
             case armvp:
-                String[] ret4 =  {"armflash","armflash","armflash","armstump","armcv","armflash","armflash","armflash","armstump"};
+                String[] ret4 =  {"armflash","armflash","armflash","armstump","armsam","armcv","armflash","armflash","armflash","armstump","armsam"};
                 return ret4;
             case armcv:
-                String[] ret5 = {"armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex","armmex","armsolar","armrad","armmex","armsolar","armmex"};
+                String[] ret5 = {"armmex","armsolar","armmex","armmex","armvp","armrad","armmex","armsolar","armrad","armmex","armsolar","armavp","armlab"};
                 return ret5;
             case armalab:
-                String[] ret6 = {"armack","armzeus","armfido","armzeus","armzeus","armfido","armzeus","armzeus","armfido"};
+                String[] ret6 = {"armack","armzeus","armfido","armzeus","armzeus","armfido","armzeus","armzeus","armfido","armsnipe"};
                 return ret6;
             case armack:
                 String[] ret7 = {"armarad","armfus","armmmkr","armmmkr"};
                 return ret7;
+            case armavp:
+                String[] ret8 = {"armbull"};
+                return ret8;
             default:
                 ai.sendTextMsg("no list found for: "+name);
                 break;
