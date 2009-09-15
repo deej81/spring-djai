@@ -41,7 +41,6 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     public ResourceHandler ResourceHandler = new ResourceHandler();
     private TaskManager m_TaskManager = new TaskManager();
     private static final int DEFAULT_ZONE = 0;
-    public List<DJAIUnit> units = new ArrayList();
     private List<DJAIEnemyUnit> enemies = new ArrayList();
     public AIFloat3 basePos;
     private Boolean m_FirstFactory=true;
@@ -50,17 +49,21 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     public DJAIUnitDefManager DefManager;
     public UnitManager DJUnitManager;
 
+    public boolean Debug=false;
+
     public int handleEngineCommand(AICommand command) {
 		return Callback.getEngine().handleCommand(
 				com.springrts.ai.AICommandWrapper.COMMAND_TO_ID_ENGINE,
 				-1, command);
 	}
 	public int sendTextMsg(String msg) {
-
-		//SendTextMessageAICommand msgCmd
-		//	= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
-		//return handleEngineCommand(msgCmd);
-        return 0;
+            if(Debug){
+		SendTextMessageAICommand msgCmd
+			= new SendTextMessageAICommand(msg, DEFAULT_ZONE);
+		return handleEngineCommand(msgCmd);
+            }else{
+                return 0;
+            }
 	}
 
   @Override public int init(int teamId, OOAICallback callback){
@@ -80,9 +83,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
     DJAIUnit newUnit = new DJAIUnit(unit, def);
     sendTextMsg("unit IsFactory: "+String.valueOf(newUnit.DJUnitDef.IsFactory));
-    units.add(newUnit);
-
-    DJUnitManager.UnitBuildingCompleted(newUnit);
+    
+    DJUnitManager.UnitBuildingCompleted(newUnit,this);
 
     
     if (unit.getDef().getName().equals("armcom")){
@@ -111,7 +113,20 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
   @Override
 	public int unitIdle(Unit unit) {
             try{
-                for(DJAIUnit djUn: units){
+                
+                
+                DJAIUnitDef def = DefManager.getUnitDefForUnit(unit.getDef());
+                
+                List<DJAIUnit> collection = null;
+                if(def.IsScouter) collection = DJUnitManager.Scouters;
+                else if(def.IsCommander) collection = DJUnitManager.Commanders;
+                else if(def.IsBuilder) collection = DJUnitManager.Builders;
+                else if(def.IsFactory) collection = DJUnitManager.Factories;
+                else{
+                    return 0;
+                }
+                
+                for(DJAIUnit djUn: collection){
                     if(unit.equals(djUn.SpringUnit)){
                         m_TaskManager.allocateTaskToUnit(djUn, ResourceHandler, this);
                         break;
@@ -128,7 +143,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 	}
 
     private void checkForEnableWaitingFactories() {
-        for(DJAIUnit unit: units){
+        for(DJAIUnit unit: DJUnitManager.Factories){
             if(unit.DJUnitDef.IsFactory) {
                 sendTextMsg("found factory");
                 if(unit.IsFactoryOnWait){
@@ -136,16 +151,24 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                     unit.IsFactoryOnWait=false;
                     m_TaskManager.allocateTaskToUnit(unit, ResourceHandler, this);
                 }
-            }else if(unit.DJUnitDef.IsBuilder){
-                if(unit.IsBuilderDoingGuard){
-                    unit.IsBuilderDoingGuard=false;
-                    m_TaskManager.allocateTaskToUnit(unit, ResourceHandler, this);
-                }
             }
 
         }
     }
 
+    private void checkGuardingBuilders(){
+        for(DJAIUnit unit:DJUnitManager.Builders){
+
+
+            if(unit.DJUnitDef.IsBuilder){
+                if(unit.IsBuilderDoingGuard){
+                    unit.IsBuilderDoingGuard=false;
+                    m_TaskManager.allocateTaskToUnit(unit, ResourceHandler, this);
+                }
+            }
+        }
+
+    }
   
 
   private void distributeAttackers(int frame){
@@ -164,12 +187,10 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                     attackers=enemy.BeingAttackedBy.size();
                     sendTextMsg("current enemy attackers: "+String.valueOf(enemy.BeingAttackedBy.size()));
                      sendTextMsg("In Enemy Loop 2");
-                     if(units==null) break;
-                     sendTextMsg("In Enemy Loop 3");
-                     sendTextMsg("current number of units: "+String.valueOf(units.size()));
+                     sendTextMsg("current number of units: "+String.valueOf(DJUnitManager.Attackers.size()));
 
-                    for(int i=units.size()-1;i>=0;i--){
-                        DJAIUnit unit = units.get(i);
+                    for(int i=DJUnitManager.Attackers.size()-1;i>=0;i--){
+                        DJAIUnit unit = DJUnitManager.Attackers.get(i);
                         sendTextMsg("In Attackers Loop");
                         //if(frame-unit.FrameCommand>60000){
                            //unit.Attaking=null;
@@ -263,6 +284,11 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
             checkForEnableWaitingFactories();
         }
+        //if early game don't wait with guarding get on with it
+        if (frame % 650 == 0 || (frame<36000)&&(frame%60==0)) {
+
+            checkGuardingBuilders();
+        }
         
         if (frame % 500 == 0) {
 
@@ -333,6 +359,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
     @Override
 	public int unitDestroyed(Unit unit, Unit attacker) {
+
+
         sendTextMsg("unitDestroyed");
         if(DefManager.getUnitDefForUnit(unit.getDef()).IsExtractor){
             sendTextMsg("freed mex spot");
@@ -340,26 +368,10 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
         }
 
-
-
         try{
-            for(DJAIUnit u:units){
-            if(u.SpringUnit==null) {
-                units.remove(u);
-                sendTextMsg("removed null unit");
-            }
-            if(u.SpringUnit.equals(unit)){
-                DJUnitManager.UnitDestroyed(u);
-                if(u.CurrentlyBuildingDef!=null){
-                    DJUnitManager.UnitBuildingNotCompleted(u.CurrentlyBuildingDef);
-                }
-                units.remove(u);
-                sendTextMsg("removed dead unit");
-                break;
-            }
 
+            DJUnitManager.UnitDestroyed(unit,this);
             updateEnemies(unit);
-        }
         }catch(Exception ex){
             sendTextMsg("unit destoyed prob: "+ex.getMessage());
         }
@@ -371,7 +383,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
     private void clearUnitsAttacking(Unit enemy){
         try{
-            for(DJAIUnit unit : units){
+            for(DJAIUnit unit : DJUnitManager.Attackers){
                if(unit.DJUnitDef.IsAttacker){
                    if(unit.Attaking!=null){
                         if(unit.Attaking.equals(enemy)){
@@ -405,9 +417,11 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
              //   return;
             //}
         //}
+        List<DJAIEnemyUnit> nullEnemies = new ArrayList();
         for(DJAIEnemyUnit de: enemies){
             if(de.SpringUnit==null){
                 sendTextMsg("Cleared null enemy");
+                nullEnemies.add(de);
             }
             if(de.SpringUnit.equals(enemy)){
                 enemies.remove(de);
@@ -415,6 +429,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                 break;
             }
         }
+        enemies.removeAll(nullEnemies);
     }
 
     private void updateEnemies(Unit unit) {
