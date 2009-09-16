@@ -8,7 +8,11 @@ package DJAI.Resources;
 import DJAI.DJAI;
 import DJAI.Units.DJAIUnit;
 import DJAI.Units.DJAIUnitDef;
+import com.springrts.ai.AICommand;
 import com.springrts.ai.AIFloat3;
+import com.springrts.ai.command.AddPointDrawAICommand;
+import com.springrts.ai.command.CreateLineFigureDrawerAICommand;
+import com.springrts.ai.command.CreateSplineFigureDrawerAICommand;
 import com.springrts.ai.oo.OOAICallback;
 import com.springrts.ai.oo.Resource;
 import com.springrts.ai.oo.UnitDef;
@@ -61,10 +65,12 @@ public class ResourceHandler {
         
         for(int y=0;y<m_Resources.length;y++){
              ai.sendTextMsg("creating locations list for: "+ (m_Resources[y].m_Resource).getName());
-            List<AIFloat3> locations = m_Callback.getMap().getResourceMapSpotsPositions(m_Resources[y].m_Resource);
-            ai.sendTextMsg("creating map for: "+ (m_Resources[y].m_Resource).getName());
-            try{
-                m_Resources[y].initializeMap(locations, m_Callback.getMap(), ai);
+            //List<AIFloat3> locations = m_Callback.getMap().getResourceMapSpotsPositions(m_Resources[y].m_Resource);
+             try{
+                 List<ResourceSquare> locations = ResourceFinder.SearchResourceSpots(m_Resources[y].m_Resource, ai);
+                ai.sendTextMsg("creating map for: "+ (m_Resources[y].m_Resource).getName());
+                m_Resources[y].m_Squares = locations;
+                //m_Resources[y].initializeMap(locations, m_Callback.getMap(), ai);
             }catch(Exception ex){
  
                 ai.sendTextMsg("EXCEPTION: "+ ex.getMessage());
@@ -108,7 +114,17 @@ public class ResourceHandler {
             for(int y=0;y<m_Resources.length;y++){
                 if(springDef.getExtractsResource(m_Resources[y].m_Resource)>0){
                     ai.sendTextMsg("looking for resource:" +m_Resources[y].m_Resource.getName());
+
+                    if(ai.Debug){
+                        AIFloat3 pos = m_Resources[y].getNearestLocation(currPos, ai, true).ExactLocation;
+                        AICommand command = new AddPointDrawAICommand(pos, "MEX LOCATION");
+                        int success = ai.handleEngineCommand(command);
+                        if(success!=0) ai.sendTextMsg("failed to set marker");
+                        return pos;
+                    }
                     return m_Resources[y].getNearestLocation(currPos, ai, true).ExactLocation;
+
+                    //return m_Resources[y].getNearestLocation(currPos, ai, true).ExactLocation;
                 }
             }
             
@@ -194,8 +210,8 @@ public class ResourceHandler {
                 ai.sendTextMsg("Total OK");
                 if(requirement.MaxTotal!=-1&&income>requirement.MaxTotal) return false;
                 ai.sendTextMsg("Max Total OK");
-                if(surplus<requirement.RequiredSurplus) return false;
-                ai.sendTextMsg("Surplus OK");
+                //if(surplus<requirement.RequiredSurplus) return false;
+                //ai.sendTextMsg("Surplus OK");
             }
 
         }

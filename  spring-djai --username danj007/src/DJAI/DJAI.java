@@ -316,8 +316,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     @Override
 	public int enemyLeaveLOS(Unit enemy) {
         sendTextMsg("enemyLeaveLOS");
-        removeEnemy(enemy);
-        clearUnitsAttacking(enemy);
+        //removeEnemy(enemy);
+        //clearUnitsAttacking(enemy);
         sendTextMsg("enemyLeaveLOS OK");
 		return 0; // signaling: OK
 	}

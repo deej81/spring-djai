@@ -5,7 +5,9 @@
 
 package DJAI.Resources;
 
+import DJAI.Units.DJAIUnitDef;
 import com.springrts.ai.AIFloat3;
+import com.springrts.ai.oo.Map;
 import com.springrts.ai.oo.UnitDef;
 
 /**
@@ -14,6 +16,12 @@ import com.springrts.ai.oo.UnitDef;
  */
 public class ResourceSquare {
 
+    public ResourceSquare(){}
+
+    public ResourceSquare(AIFloat3 location){
+        ExactLocation = location;
+    }
+    
     public Boolean Occupied=false;
     public UnitDef OccupiedBy;
     public AIFloat3 ExactLocation;
