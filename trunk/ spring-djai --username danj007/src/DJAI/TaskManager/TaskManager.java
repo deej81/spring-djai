@@ -287,22 +287,22 @@ public class TaskManager {
                 String[] ret = {"armmex","armsolar","armsolar","armmex","armlab","armrad","armmex","armmex","armsolar","armmex","armsolar","armsolar","armvp","armsolar"};
                 return ret;
             case armck:
-                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armrad","armmex","armsolar","armmex","armalab","armvp"};
+                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armllt","armrad","armmex","armsolar","armmex","armalab","armvp"};
                 return ret3;
             case armlab:
-                String[] ret2 = {"armck","armpw","armjeth","armpw","armwar","armham","armham","armwar","armck","armpw","armwar","armham","armwar","armwar"};
+                String[] ret2 = {"armck","armpw","armwar","armham","armwar","armham","armham","armwar","armck","armpw","armwar","armham","armwar","armwar"};
                 return ret2;
             case armvp:
-                String[] ret4 =  {"armflash","armflash","armflash","armstump","armsam","armcv","armflash","armflash","armflash","armstump","armsam"};
+                String[] ret4 =  {"armcv","armflash","armflash","armstump","armsam","armcv","armflash","armflash","armflash","armstump","armsam"};
                 return ret4;
             case armcv:
-                String[] ret5 = {"armmex","armsolar","armmex","armmex","armvp","armrad","armmex","armsolar","armrad","armmex","armsolar","armavp","armlab"};
+                String[] ret5 = {"armmex","armsolar","armmex","armmex","armvp","armllt","armrad","armmex","armsolar","armrad","armmex","armsolar","armavp","armlab"};
                 return ret5;
             case armalab:
                 String[] ret6 = {"armack","armzeus","armfido","armzeus","armzeus","armfido","armzeus","armzeus","armfido","armsnipe"};
                 return ret6;
             case armack:
-                String[] ret7 = {"armarad","armfus","armmmkr","armmmkr"};
+                String[] ret7 = {"armfus","armmmkr","armmmkr","armarad"};
                 return ret7;
             case armavp:
                 String[] ret8 = {"armbull"};
