@@ -17,12 +17,14 @@ import java.util.List;
  */
 public class DJAIEnemyUnit implements Comparator{
 
+
     public DJAIEnemyUnit(Unit springUnit){
         SpringUnit = springUnit;
     }
     public DJAIEnemyUnit(){}
 
     public Unit SpringUnit;
+    public int BuildingsKilled=0;
 
     public List<DJAIUnit> BeingAttackedBy = new ArrayList();
 
@@ -35,13 +37,19 @@ public class DJAIEnemyUnit implements Comparator{
 
         if(a.SpringUnit==null) return -1;
         if(b.SpringUnit==null) return 1;
-        
-        float aExp = a.SpringUnit.getExperience();
-        float bExp = b.SpringUnit.getExperience();
 
-        if(aExp==bExp) return 0;
-        if(aExp > bExp) return 1;
+        if(a.BuildingsKilled==b.BuildingsKilled){
         
+            float aExp = a.SpringUnit.getExperience();
+            float bExp = b.SpringUnit.getExperience();
+
+            if(aExp==bExp) return 0;
+            if(aExp > bExp) return 1;
+
+            
+        }else{
+            if(a.BuildingsKilled>b.BuildingsKilled) return 1;
+        }
         return -1;
     }
 

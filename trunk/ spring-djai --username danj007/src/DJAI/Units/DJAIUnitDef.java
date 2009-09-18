@@ -25,6 +25,9 @@ public class DJAIUnitDef {
     public Boolean IsCommander=false;
     public Boolean IsAttacker=false;
     public Boolean IsExtractor=false;
+    public Boolean IsResourceProducer=false;
+    public Boolean DoResourceCheck=true;
+    public int TechLevel=0;
 
     //max build 0=dont build, -1=infinate
     public int MaxBuildNumber=-1;
@@ -52,10 +55,15 @@ public class DJAIUnitDef {
 
         SoloBuild=IsFactory;
 
+        TechLevel = springDef.getTechLevel();
+
         for(Resource resource:gameResources){
             if(springDef.getExtractsResource(resource)>0) {
                 IsExtractor=true;
                 break;
+            }else if(springDef.getUpkeep(resource)<0){
+                IsResourceProducer=true;
+                DoResourceCheck=false;
             }
 
             ResourceRequirement req = new ResourceRequirement();
