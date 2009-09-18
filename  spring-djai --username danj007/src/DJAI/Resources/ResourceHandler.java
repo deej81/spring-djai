@@ -115,7 +115,7 @@ public class ResourceHandler {
                 if(springDef.getExtractsResource(m_Resources[y].m_Resource)>0){
                     ai.sendTextMsg("looking for resource:" +m_Resources[y].m_Resource.getName());
 
-                    if(ai.Debug){
+                    if(ai.DoMapPings){
                         AIFloat3 pos = m_Resources[y].getNearestLocation(currPos, ai, true).ExactLocation;
                         AICommand command = new AddPointDrawAICommand(pos, "MEX LOCATION");
                         int success = ai.handleEngineCommand(command);
@@ -134,11 +134,11 @@ public class ResourceHandler {
             
         }else{
             
-            if(!builder.DJUnitDef.IsCommander&& builder.SpringUnit.getDef().getTechLevel()<springDef.getTechLevel()){
-                return callback.getMap().findClosestBuildSite(springDef, ai.basePos, 1000, 20, 0);
-            }else{
+            //if(!builder.DJUnitDef.IsCommander&& builder.SpringUnit.getDef().getTechLevel()<springDef.getTechLevel()){
+               // return callback.getMap().findClosestBuildSite(springDef, ai.basePos, 1000, 20, 0);
+            //}else{
                 return callback.getMap().findClosestBuildSite(springDef, currPos, 1000, 5, 0);
-            }
+          //  }
 
             
         }
@@ -174,13 +174,32 @@ public class ResourceHandler {
     public boolean resourcesArePlentifull(DJAI ai){
         List<Resource> resources = ai.Callback.getResources();
         for (Resource resource : resources) {
-                float currentUsage = ai.Callback.getEconomy().getUsage(resource)-ai.Callback.getEconomy().getIncome(resource);
+                //float currentUsage = ai.Callback.getEconomy().getUsage(resource)-ai.Callback.getEconomy().getIncome(resource);
                 float storage = ai.Callback.getEconomy().getStorage(resource);
                 float current = ai.Callback.getEconomy().getCurrent(resource);
 
                 double percOfStor = current/storage;
 
-                if(currentUsage>0||percOfStor<0.85){
+                if(percOfStor<0.85){
+                    return false;
+                }
+
+        }
+        return true;
+
+    }
+
+    public boolean canWeGuard(DJAI ai){
+
+        List<Resource> resources = ai.Callback.getResources();
+        for (Resource resource : resources) {
+                //float currentUsage = ai.Callback.getEconomy().getUsage(resource)-ai.Callback.getEconomy().getIncome(resource);
+                float storage = ai.Callback.getEconomy().getStorage(resource);
+                float current = ai.Callback.getEconomy().getCurrent(resource);
+
+                double percOfStor = current/storage;
+
+                if(percOfStor<0.35){
                     return false;
                 }
 

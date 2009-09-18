@@ -6,9 +6,11 @@
 package DJAI.Units;
 
 import DJAI.DJAI;
+import com.springrts.ai.AIFloat3;
 import com.springrts.ai.oo.Unit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  *
@@ -134,6 +136,12 @@ public class UnitManager {
         ai.sendTextMsg("UnitManager->UnitDestroyed: getUnitRefFromCollection : UNIT NOT FOUND");
 
         return -1;
+    }
+
+    public AIFloat3 RandomExtractorPos(){
+        Random rand = new Random();
+        int i = rand.nextInt(Extractors.size()-1);
+        return Extractors.get(i).SpringUnit.getPos();
     }
     
     public void UnitDestroyed(Unit unit, DJAI ai){
