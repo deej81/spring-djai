@@ -167,6 +167,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
     private void checkForEnableWaitingFactories() {
         for(DJAIUnit unit: DJUnitManager.Factories){
             if(unit.DJUnitDef.IsFactory) {
+                unit.Guards=0;
                 sendTextMsg("found factory");
                 if(unit.IsFactoryOnWait){
                     sendTextMsg("waiting factory unleashed");

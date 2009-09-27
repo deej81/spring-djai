@@ -139,31 +139,36 @@ public class TaskManager {
     }
     
     private boolean findNearestFactoryAndAssist(DJAIUnit unit, DJAI ai){
-        DJAIUnit fact=null;
-        double distance=-1;
-        int level=0;
-        for(DJAIUnit poss: ai.DJUnitManager.Factories){
-            if(poss.DJUnitDef.IsFactory){
-                double pDist= VectorUtils.CalcDistance(unit.SpringUnit.getPos(), poss.SpringUnit.getPos());
-                if(distance==-1 || (pDist  < distance && level==poss.DJUnitDef.TechLevel) || level<poss.DJUnitDef.TechLevel){
-                    fact=poss;
-                    distance=pDist;
-                    // guard the highest tech level factory
-                    level=poss.DJUnitDef.TechLevel;
-                    
-                }
-            }
-        }
-        
-       if(distance==-1) return false;
+       
         try{
+
             if(ai.ResourceHandler.canWeGuard(ai)&& (!techingUp || ai.ResourceHandler.resourcesArePlentifull(ai))){
+                 DJAIUnit fact=null;
+                double distance=-1;
+                int level=0;
+                for(DJAIUnit poss: ai.DJUnitManager.Factories){
+                    if(poss.DJUnitDef.IsFactory&&poss.Guards<5){
+                        double pDist= VectorUtils.CalcDistance(unit.SpringUnit.getPos(), poss.SpringUnit.getPos());
+                        if(distance==-1 || (pDist  < distance && level==poss.DJUnitDef.TechLevel) || level<poss.DJUnitDef.TechLevel){
+                            fact=poss;
+                            distance=pDist;
+                            // guard the highest tech level factory
+                            level=poss.DJUnitDef.TechLevel;
+
+                        }
+                    }
+                }
+                if(distance==-1) {
+                    return false;
+                }
                 //only actually give the guard command if we're ok on resources
                 AICommand command = new GuardUnitAICommand(unit.SpringUnit,0,new ArrayList(), 1000, fact.SpringUnit);
                 ai.Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE,
                     -1, command);
+                fact.Guards++;
             }else{
                 ai.sendTextMsg("too low on resources to guard");
+                return false;
             }
            unit.IsBuilderDoingGuard=true;
            return true;
@@ -202,7 +207,7 @@ public class TaskManager {
     }
 
     public enum UnitNames{
-        armcom,armlab,armck,armvp,armcv,armalab,armack,armavp,armap,armacv;
+        armcom,armlab,armck,armvp,armcv,armalab,armack,armavp,armap,armacv,armshltx;
     }
 
     public int allocateTaskToUnit(DJAIUnit unit, ResourceHandler resourceHandler, DJAI ai){
@@ -222,6 +227,8 @@ public class TaskManager {
 
                if(unit.SpringUnit.getDef().isAbleToFly()){
                    pos.y = pos.y+(float)(unit.SpringUnit.getDef().getMaxHeightDif()*0.9);
+               }else{
+                   pos.x=pos.x+10;
                }
 
                AICommand command = new MoveUnitAICommand(unit.SpringUnit, -1, new ArrayList(), 1000, pos);
@@ -317,10 +324,10 @@ public class TaskManager {
                 String[] ret = {"armmex","armsolar","armsolar","armmex","armmex","armlab","armrad","armmex","armmex","armsolar","armmex","armsolar","armsolar","armvp","armsolar"};
                 return ret;
             case armck:
-                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armlab","armllt","armrad","armmex","armsolar","armmex","armalab","armvp","armap","armhlt"};
+                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armrl","armlab","armllt","armrad","armmex","armsolar","armmex","armalab","armvp","armap","armhlt"};
                 return ret3;
             case armlab:
-                String[] ret2 = {"armck","armpw","armwar","armham","armjeth","armwar","armham","armham","armwar","armck","armpw","armwar","armham","armwar","armwar"};
+                String[] ret2 = {"armck","armpw","armwar","armham","armck","armjeth","armwar","armham","armham","armwar","armpw","armwar","armham","armwar","armwar"};
                 return ret2;
             case armvp:
                 String[] ret4 =  {"armcv","armflash","armflash","armstump","armsam","armcv","armsam","armflash","armflash","armflash","armstump","armsam"};
@@ -329,18 +336,23 @@ public class TaskManager {
                 String[] ret5 = {"armmex","armsolar","armmex","armmex","armvp","armclaw","armrad","armmex","armsolar","armrad","armmex","armsolar","armavp","armlab","armap","armhlt"};
                 return ret5;
             case armalab:
-                String[] ret6 = {"armack","armfast","armzeus","armmav","armfido","armzeus","armzeus","armmav","armfido","armzeus","armzeus","armfido","armsnipe","armmav"};
+                String[] ret6 = {"armack","armfast","armzeus","armmav","armfido","armzeus","armfboy","armmav","armfido","armzeus","armzeus","armfido","armfboy","armaak"};
                 return ret6;
             case armack:
+                 String[] ret10 = {"armfus","armmmkr","armmmkr","armarad","armshltx"};
+                return ret10;
             case armacv:
                 String[] ret7 = {"armfus","armmmkr","armmmkr","armarad","armbrtha"};
                 return ret7;
             case armavp:
-                String[] ret8 = {"armacv","armlatnk","armlatnk","armlatnk","armbull","armbull","armmanni","armlatnk","armlatnk","armlatnk","armbull","armbull","armmanni"};
+                String[] ret8 = {"armacv","armlatnk","armbull","armlatnk","armbull","armbull","armmanni","armlatnk","armbull","armlatnk","armbull","armbull","armmanni","armmart"};
                 return ret8;
             case armap:
                 String[] ret9 = {"armpeep","armpeep","armpeep","armpeep","armkam","armkam","armkam","armkam"};
                 return ret9;
+            case armshltx:
+                String[] ret11 = {"armbanth"};
+                return ret11;
             default:
                 ai.sendTextMsg("no list found for: "+name);
                 break;
