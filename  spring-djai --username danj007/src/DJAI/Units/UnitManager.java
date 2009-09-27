@@ -28,7 +28,6 @@ public class UnitManager {
 
     public List<DJAIUnitDef> CurrentlyBuilding = new ArrayList();
 
-
     public void UnitBuildingStarted(DJAIUnitDef unit){
         CurrentlyBuilding.add(unit);
     }
@@ -74,6 +73,7 @@ public class UnitManager {
             if(CurrentlyBuilding.get(i).SpringDefID==unit.DJUnitDef.SpringDefID){
                 ai.sendTextMsg("Found Build - removing");
                 CurrentlyBuilding.remove(i);
+                break;
             }
 
         }

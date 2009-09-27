@@ -30,6 +30,8 @@ public class DJAIUnit{
     public Boolean IsFactoryOnWait=false;
     public Boolean IsBuilderDoingGuard=false;
 
+    public int Guards = 0;
+
     public DJAIUnit(Unit springUnit, DJAIUnitDef djDef){
         SpringUnit = springUnit;
         DJUnitDef = djDef;
