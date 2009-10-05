@@ -137,7 +137,7 @@ public class ResourceHandler {
             //if(!builder.DJUnitDef.IsCommander&& builder.SpringUnit.getDef().getTechLevel()<springDef.getTechLevel()){
                // return callback.getMap().findClosestBuildSite(springDef, ai.basePos, 1000, 20, 0);
             //}else{
-                return callback.getMap().findClosestBuildSite(springDef, currPos, 1000, 5, 0);
+                return callback.getMap().findClosestBuildSite(springDef, currPos, 1000, 10, 0);
           //  }
 
             

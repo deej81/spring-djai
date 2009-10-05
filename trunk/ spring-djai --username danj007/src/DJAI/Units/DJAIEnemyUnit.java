@@ -53,5 +53,23 @@ public class DJAIEnemyUnit implements Comparator{
         return -1;
     }
 
+    @Override public boolean equals(Object aThat) {
+        if(!(aThat instanceof DJAIEnemyUnit) ) return false;
+        
+        if(this==aThat) return true;
+
+        DJAIEnemyUnit unit = (DJAIEnemyUnit)aThat;
+        if(unit.SpringUnit==null) return true;
+        if(unit.SpringUnit.getUnitId()==this.SpringUnit.getUnitId()) return true;
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 53 * hash + (this.SpringUnit != null ? this.SpringUnit.hashCode() : 0);
+        return hash;
+    }
+
 
 }
