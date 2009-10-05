@@ -196,7 +196,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
   private void distributeAttackers(int frame){
       int boost=frame/18000;
       int maxCommitAttackers = 2+boost;
-      int maxAttackers=DJUnitManager.Attackers.size()/(enemies.size()+1);
+      int maxAttackers=DJUnitManager.Attackers.size()/(enemies.size()+1)-1;
       int maxUpdateAmount=100;
       int currentUpdateAmount=0;
       int commandExecuteTime=1000;
@@ -205,14 +205,16 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
       if(maxAttackers<1) maxAttackers=3+boost;
              int attackers=0;
+             int attackerIndex=DJUnitManager.Attackers.size()-1;
              sendTextMsg("Enemy Count: "+String.valueOf(enemies.size()));
+             sendTextMsg("Attacker Count: "+String.valueOf(DJUnitManager.Attackers.size()));
                 for(DJAIEnemyUnit enemy:enemies){
-                    if(enemy.SpringUnit.getTeam()==commander.getTeam()){
+                    //if(enemy.SpringUnit.getTeam()==commander.getTeam()){
                         //AICommand command = new AddPointDrawAICommand(enemy.SpringUnit.getPos(), "ENEMY WRONG");
                        // handleEngineCommand(command);
                         //enemies.remove(enemy);
-                        continue;
-                    }
+                      //  continue;
+                    //}
                     //if(currentUpdateAmount>maxUpdateAmount) break;
                     sendTextMsg("In Enemy Loop");
                     if(enemy==null){
@@ -223,10 +225,12 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                     //sendTextMsg("ASSESSING: " +enemy.getDef().getName());
                     attackers=enemy.BeingAttackedBy.size();
                     sendTextMsg("current enemy attackers: "+String.valueOf(enemy.BeingAttackedBy.size()));
-                     sendTextMsg("In Enemy Loop 2");
-                     sendTextMsg("current number of units: "+String.valueOf(DJUnitManager.Attackers.size()));
 
-                    for(int i=DJUnitManager.Attackers.size()-1;i>=0;i--){
+                    sendTextMsg("In Enemy Loop 2");
+                    sendTextMsg("current number of units: "+String.valueOf(DJUnitManager.Attackers.size()));
+
+                    for(int i=attackerIndex;i>=0;i--){
+                        attackerIndex=i;
                         currentUpdateAmount++;
                         DJAIUnit unit = DJUnitManager.Attackers.get(i);
                         sendTextMsg("In Attackers Loop");
@@ -236,6 +240,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                         //}
                         if(attackers==maxAttackers){
                             sendTextMsg("Enough Attackers");
+                            attackerIndex=i;
                             break;
                         }
 
@@ -244,6 +249,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                         if(unit==null){
                             sendTextMsg("Own Attacker dead");
                             //units.remove(unit);
+                            attackerIndex=i;
                             break;
 
                         }
@@ -251,6 +257,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                         if(unit.SpringUnit==null){
                             sendTextMsg("Own Attacker sp unit dead");
                             //units.remove(unit);
+                            attackerIndex=i;
                             break;
 
                         }
@@ -265,6 +272,7 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                                         if(enemy.SpringUnit.getPos().x==0){
                                             //enemies.remove(enemy);
                                             sendTextMsg("no enemy position");
+                                            attackerIndex=i;
                                             break;
 
                                         }else{
