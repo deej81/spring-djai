@@ -198,7 +198,12 @@ public class TaskManager {
 
         AIFloat3 buildPos = resourceHandler.getSpotforUnit(unit,toB,toBuild, ai.Callback, unit.SpringUnit.getPos(),ai);
 
-       if(buildPos==null) return;
+       if(buildPos==null){
+            if(unit.DJUnitDef.IsFactory) unit.IsFactoryOnWait=true;
+            if(unit.DJUnitDef.IsBuilder) unit.IsBuilderDoingGuard=true;
+
+           return;
+       }
        AICommand command = new BuildUnitAICommand(unit.SpringUnit, -1,
            new ArrayList<AICommand.Option>(), 10000, toBuild,
            buildPos, 0);
@@ -339,7 +344,7 @@ public class TaskManager {
                 String[] ret6 = {"armack","armfast","armzeus","armmav","armfido","armzeus","armfboy","armmav","armfido","armzeus","armzeus","armfido","armfboy","armaak"};
                 return ret6;
             case armack:
-                 String[] ret10 = {"armfus","armmmkr","armmmkr","armarad","armshltx"};
+                 String[] ret10 = {"armfus","armmmkr","armmmkr","armarad","armshltx","armbrtha"};
                 return ret10;
             case armacv:
                 String[] ret7 = {"armfus","armmmkr","armmmkr","armarad","armbrtha"};
