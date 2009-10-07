@@ -149,7 +149,13 @@ public class UnitManager {
         ai.sendTextMsg("UnitManager->UnitDestroyed");
         
         DJAIUnitDef def = ai.DefManager.getUnitDefForUnit(unit.getDef());
-
+        
+        if(def.IsAttacker) getUnitRefFromCollection(unit, Attackers, true, ai);
+        if(def.IsExtractor) getUnitRefFromCollection(unit, Extractors, true, ai);
+        if(def.IsFactory) getUnitRefFromCollection(unit, Factories, true, ai);
+        if(def.IsCommander) getUnitRefFromCollection(unit, Commanders, true, ai);
+        if(def.IsScouter) getUnitRefFromCollection(unit, Scouters, true, ai);
+        if(def.IsBuilder) getUnitRefFromCollection(unit, Builders, true, ai);
         if(def==null) return;
 
         if(unit.isBeingBuilt()){
@@ -164,12 +170,7 @@ public class UnitManager {
             }
         }
 
-        if(def.IsAttacker) getUnitRefFromCollection(unit, Attackers, true, ai);
-        if(def.IsExtractor) getUnitRefFromCollection(unit, Extractors, true, ai);
-        if(def.IsFactory) getUnitRefFromCollection(unit, Factories, true, ai);
-        if(def.IsCommander) getUnitRefFromCollection(unit, Commanders, true, ai);
-        if(def.IsScouter) getUnitRefFromCollection(unit, Scouters, true, ai);
-        if(def.IsBuilder) getUnitRefFromCollection(unit, Builders, true, ai);
+        
         
     }
 
