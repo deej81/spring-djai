@@ -32,12 +32,13 @@ public class TaskManager {
 
     private Random m_Rand = new Random();
     private Boolean techingUp = false;
+    private int m_iHighestTechLevelSeen = 0;
 
     private boolean checkExceedsMaxBuildCount(DJAIUnit unit, DJAIUnitDef def, DJAI ai){
         ai.sendTextMsg("checking max build count");
         if(def.MaxBuildNumber!=-1){
             int current = ai.DJUnitManager.CurrentUnitCount(def);
-            if(current>def.MaxBuildNumber){
+            if(current>=def.MaxBuildNumber){
                 ai.sendTextMsg("max build exceeded");
                 return true;
             }
@@ -46,13 +47,14 @@ public class TaskManager {
         
         ai.sendTextMsg("checking solo build");
         //another unit is allocated
-        if( ai.DJUnitManager.amIBuilding(def,ai) && def.SoloBuild){
+        if(def.SoloBuild){
+            if(ai.DJUnitManager.amIBuilding(def,ai)){
             //this is the unit allocated
-            ai.sendTextMsg("is solo build");
+            ai.sendTextMsg("is solo build and being built");
 
             if(unit.CurrentlyBuildingDef==null){
                ai.sendTextMsg("I have no build allocated to me, on we go");
-                return true;
+               return true;
             }
 
             if(unit.CurrentlyBuildingDef.SpringDefID==def.SpringDefID){
@@ -61,6 +63,7 @@ public class TaskManager {
             }
             ai.sendTextMsg("not allocated to me, on we go");
             return true;
+            }
         }
         ai.sendTextMsg("check passed");
         return false;
@@ -74,6 +77,13 @@ public class TaskManager {
         String buildID ="";
 
         DJAIUnitDef djDef= ai.DefManager.getUnitDefForUnit(list[unit.BuildIndex]);
+        if(resourceHandler.resourcesArePlentifull(ai)&&!unit.DJUnitDef.IsFactory&&!djDef.IsFactory){
+                ai.sendTextMsg("finding guard pos for:" + unit.SpringUnit.getDef().getName());
+                unit.BuildIndex++;
+                if(findNearestFactoryAndAssist(unit,ai)){
+                    return 0;
+                }
+        }
         ai.sendTextMsg("checking resource reqs for: "+djDef.SpringName);
 
         while(checkExceedsMaxBuildCount(unit, djDef, ai)){
@@ -84,20 +94,24 @@ public class TaskManager {
 
         if(ai.ResourceHandler.checkResourceRequirements(djDef.ResourceRequirements, ai) || ! djDef.DoResourceCheck){
                 ai.sendTextMsg("building is ok to go: "+djDef.SpringName);
-                unit.CurrentlyBuildingDef = djDef;
                 if(unit.CurrentlyBuildingDef!=djDef){
                     ai.DJUnitManager.UnitBuildingStarted(djDef);
+                    unit.CurrentlyBuildingDef = djDef;
                 }
+                
                 buildID = list[unit.BuildIndex];
                 unit.BuildIndex++;
         }else{
             ai.sendTextMsg("building failed check: "+djDef.SpringName);
             //buildResource(unit, resourceHandler, ai);
-            if(unit.DJUnitDef.IsFactory) unit.IsFactoryOnWait=true;
-            if(unit.DJUnitDef.IsBuilder) unit.IsBuilderDoingGuard=true;
-            if(unit.DJUnitDef.IsBuilder)
+            if(unit.DJUnitDef.IsFactory){
+                unit.IsFactoryOnWait=true;
+                return 0;
+            }
+            if(unit.DJUnitDef.IsBuilder){
                 //notify UnitManager that this job is allocated here and we will wait to be able to build
                 ai.sendTextMsg("allocating job to unit and waiting");
+                unit.IsBuilderDoingGuard=true;
                 if(unit.CurrentlyBuildingDef!=djDef){
                     ai.DJUnitManager.AllocateUnitToBuild(unit, djDef, ai);
                     ai.DJUnitManager.UnitBuildingStarted(djDef);
@@ -107,7 +121,8 @@ public class TaskManager {
                     }
                 }
                 findNearestFactoryAndAssist(unit, ai);
-            return 0;
+                return 0;
+            }
         }
 
        if(unit.BuildIndex==list.length){
@@ -143,10 +158,13 @@ public class TaskManager {
         try{
 
             if(ai.ResourceHandler.canWeGuard(ai)&& (!techingUp || ai.ResourceHandler.resourcesArePlentifull(ai))){
-                 DJAIUnit fact=null;
+                DJAIUnit fact=null;
                 double distance=-1;
                 int level=0;
+                int factIndex=0;
+                int selectedIndex=-1;
                 for(DJAIUnit poss: ai.DJUnitManager.Factories){
+                    factIndex++;
                     if(poss.DJUnitDef.IsFactory&&poss.Guards<5){
                         double pDist= VectorUtils.CalcDistance(unit.SpringUnit.getPos(), poss.SpringUnit.getPos());
                         if(distance==-1 || (pDist  < distance && level==poss.DJUnitDef.TechLevel) || level<poss.DJUnitDef.TechLevel){
@@ -154,6 +172,7 @@ public class TaskManager {
                             distance=pDist;
                             // guard the highest tech level factory
                             level=poss.DJUnitDef.TechLevel;
+                            selectedIndex=factIndex;
 
                         }
                     }
@@ -165,7 +184,7 @@ public class TaskManager {
                 AICommand command = new GuardUnitAICommand(unit.SpringUnit,0,new ArrayList(), 1000, fact.SpringUnit);
                 ai.Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE,
                     -1, command);
-                fact.Guards++;
+                ai.DJUnitManager.Factories.get(selectedIndex).Guards++;
             }else{
                 ai.sendTextMsg("too low on resources to guard");
                 return false;
@@ -191,9 +210,9 @@ public class TaskManager {
             ai.sendTextMsg("error getting def: "+ex.getMessage());
         }
 
-        if(unit.DJUnitDef.TechLevel< toB.TechLevel){
-            techingUp=false;
-        }
+       // if(unit.DJUnitDef.TechLevel< toB.TechLevel){
+        //    techingUp=false;
+       // }
 
 
         AIFloat3 buildPos = resourceHandler.getSpotforUnit(unit,toB,toBuild, ai.Callback, unit.SpringUnit.getPos(),ai);
@@ -216,15 +235,16 @@ public class TaskManager {
     }
 
     public int allocateTaskToUnit(DJAIUnit unit, ResourceHandler resourceHandler, DJAI ai){
-        ai.sendTextMsg("task needed for:" + unit.SpringUnit.getDef().getName());
-        if(unit.DJUnitDef.IsAttacker){
-            //move to extractor pos
-            AICommand command = new MoveUnitAICommand(unit.SpringUnit, -1, new ArrayList(), 1000, ai.DJUnitManager.RandomExtractorPos());
-                ai.Callback.getEngine().handleCommand(AICommandWrapper.COMMAND_TO_ID_ENGINE, -1, command);
-            return 0;
-        } //leave to attack handler
 
-        if(unit.DJUnitDef.IsScouter){
+        if(unit.DJUnitDef.TechLevel>m_iHighestTechLevelSeen){
+
+            m_iHighestTechLevelSeen = unit.DJUnitDef.TechLevel;
+            techingUp=false;
+        }
+
+        ai.sendTextMsg("task needed for:" + unit.SpringUnit.getDef().getName());
+        
+        if(unit.DJUnitDef.IsScouter || unit.DJUnitDef.IsAttacker){
             ai.sendTextMsg("scout job for:" + unit.SpringUnit.getDef().getName());
             try{
                int rand = m_Rand.nextInt(resourceHandler.MexSpots().size());
@@ -245,14 +265,7 @@ public class TaskManager {
            }
         }else if(unit.DJUnitDef.IsBuilder){
             ai.sendTextMsg("builder job for:" + unit.SpringUnit.getDef().getName());
-            if(resourceHandler.resourcesArePlentifull(ai)){
-                ai.sendTextMsg("finding guard pos for:" + unit.SpringUnit.getDef().getName());
-                if(findNearestFactoryAndAssist(unit,ai)){
-                    return 0;
-                }
-            }
-            
-            if(resourceHandler.shortOnResource(ai)){
+             if(resourceHandler.shortOnResource(ai)){
                 ai.sendTextMsg("short on resource");
                 buildResource(unit, resourceHandler, ai);
             }else{
@@ -326,37 +339,37 @@ public class TaskManager {
 
         switch(UnitNames.valueOf(name)){
             case armcom:
-                String[] ret = {"armmex","armsolar","armsolar","armmex","armmex","armlab","armrad","armmex","armmex","armsolar","armmex","armsolar","armsolar","armvp","armsolar"};
+                String[] ret = {"armmex","armsolar","armsolar","armmex","armmex","armlab","armrad","armmex","armmex","armsolar","armmex","armsolar","armsolar","armmstor","armvp","armsolar"};
                 return ret;
             case armck:
-                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armrl","armlab","armllt","armrad","armmex","armsolar","armmex","armalab","armvp","armap","armhlt"};
+                String[] ret3 = {"armmex","armsolar","armmex","armmex","armsolar","armrl","armlab","armllt","armrad","armmex","armsolar","armmex","armalab","armjamt","armap","armvp","armhlt"};
                 return ret3;
             case armlab:
                 String[] ret2 = {"armck","armpw","armwar","armham","armck","armjeth","armwar","armham","armham","armwar","armpw","armwar","armham","armwar","armwar"};
                 return ret2;
             case armvp:
-                String[] ret4 =  {"armcv","armflash","armflash","armstump","armsam","armcv","armsam","armflash","armflash","armflash","armstump","armsam"};
+                String[] ret4 =  {"armcv","armflash","armflash","armstump","armsam","armcv","armsam","armflash","armflash","armjanus","armstump","armsam","armjanus"};
                 return ret4;
             case armcv:
-                String[] ret5 = {"armmex","armsolar","armmex","armmex","armvp","armclaw","armrad","armmex","armsolar","armrad","armmex","armsolar","armavp","armlab","armap","armhlt"};
+                String[] ret5 = {"armmex","armsolar","armmex","armmex","armvp","armclaw","armrad","armmex","armsolar","armrad","armmex","armsolar","armavp","armjamt","armap","armlab","armhlt","armguard"};
                 return ret5;
             case armalab:
-                String[] ret6 = {"armack","armfast","armzeus","armmav","armfido","armzeus","armfboy","armmav","armfido","armzeus","armzeus","armfido","armfboy","armaak"};
+                String[] ret6 = {"armack","armfast","armzeus","armfboy","armfboy","armzeus","armfboy","armfboy","armfido","armzeus","armzeus","armfboy","armfboy","armaak"};
                 return ret6;
             case armack:
-                 String[] ret10 = {"armfus","armmmkr","armmmkr","armarad","armshltx","armbrtha"};
+                 String[] ret10 = {"armfus","armflak","armmmkr","armfus","armamb","armanni","armpb","armpb","armarad","armbrtha","armshltx"};
                 return ret10;
             case armacv:
-                String[] ret7 = {"armfus","armmmkr","armmmkr","armarad","armbrtha"};
+                String[] ret7 = {"armfus","armflak","armmmkr","armfus","armamb","armanni","armpb","armmmkr","armarad","aafus","armbrtha"};
                 return ret7;
             case armavp:
-                String[] ret8 = {"armacv","armlatnk","armbull","armlatnk","armbull","armbull","armmanni","armlatnk","armbull","armlatnk","armbull","armbull","armmanni","armmart"};
+                String[] ret8 = {"armacv","armbull","armbull","armbull","armbull","armbull","armmanni","armbull","armbull","armbull","armbull","armbull","armmanni","armmart"};
                 return ret8;
             case armap:
                 String[] ret9 = {"armpeep","armpeep","armpeep","armpeep","armkam","armkam","armkam","armkam"};
                 return ret9;
             case armshltx:
-                String[] ret11 = {"armbanth"};
+                String[] ret11 = {"armbanth","armraz","armshock"};
                 return ret11;
             default:
                 ai.sendTextMsg("no list found for: "+name);
