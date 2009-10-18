@@ -134,11 +134,11 @@ public class ResourceHandler {
             
         }else{
             
-            //if(!builder.DJUnitDef.IsCommander&& builder.SpringUnit.getDef().getTechLevel()<springDef.getTechLevel()){
-               // return callback.getMap().findClosestBuildSite(springDef, ai.basePos, 1000, 20, 0);
-            //}else{
+//            if(!builder.DJUnitDef.IsCommander&& builder.SpringUnit.getDef().getTechLevel()<springDef.getTechLevel()){
+//                return callback.getMap().findClosestBuildSite(springDef, ai.basePos, 3000, 30, 0);
+//            }else{
                 return callback.getMap().findClosestBuildSite(springDef, currPos, 1000, 10, 0);
-          //  }
+//            }
 
             
         }

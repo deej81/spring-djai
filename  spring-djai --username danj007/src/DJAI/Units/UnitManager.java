@@ -30,6 +30,7 @@ public class UnitManager {
 
     public void UnitBuildingStarted(DJAIUnitDef unit){
         CurrentlyBuilding.add(unit);
+
     }
 
     public void UnitBuildingNotCompleted(DJAIUnitDef unit, DJAI ai){
@@ -65,7 +66,7 @@ public class UnitManager {
     }
 
     public void UnitBuildingCompleted(DJAIUnit unit, DJAI ai){
-
+        
         ai.sendTextMsg("Unit Completed");
         
         for(int i=0;i<CurrentlyBuilding.size();i++){
@@ -90,7 +91,7 @@ public class UnitManager {
     public int CurrentUnitCount(DJAIUnitDef def){
         int count=0;
         for(DJAIUnitDef d:CurrentlyBuilding){
-            if(d==def)count++;
+            if(d.SpringDefID==def.SpringDefID)count++;
         }
 
         if(def.IsAttacker) count+=getCountFromCollection(Attackers, def);

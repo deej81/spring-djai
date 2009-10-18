@@ -148,9 +148,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                             //idle attacker - add back to pool
                             djUn.FrameCommand=0;
                             djUn.Attaking=null;
-                        }else{
-                            m_TaskManager.allocateTaskToUnit(djUn, ResourceHandler, this);
                         }
+                        m_TaskManager.allocateTaskToUnit(djUn, ResourceHandler, this);
                         break;
                     }
                 }
@@ -193,7 +192,31 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 
     }
 
+    private void checkScouts() {
+        try{
+            if(DJUnitManager.Scouters.size()<5&&DJUnitManager.Attackers.size()>10){
+                sendTextMsg("can allocate scouts");
+                for(int i=0;i<5;i++){
+                    sendTextMsg("allocating");
+                    DJUnitManager.Attackers.get(i).DJUnitDef.IsScouter=true;
+                    DJUnitManager.Attackers.get(i).DJUnitDef.IsAttacker=false;
+                    DJUnitManager.Scouters.add(DJUnitManager.Attackers.get(i));
+                    m_TaskManager.allocateTaskToUnit(DJUnitManager.Attackers.get(i), ResourceHandler, this);
+                    DJUnitManager.Attackers.remove(i);
+                }
+
+                //for(int i=0;i<5;i++){
+                    //DJUnitManager.Attackers.remove(i);
+
+                //}
+            }
+        }catch(Exception ex){
+
+        }
+    }
+
   private void distributeAttackers(int frame){
+      //checkScouts();
       int boost=frame/18000;
       int maxCommitAttackers = 2+boost;
       int maxAttackers=DJUnitManager.Attackers.size()/(enemies.size()+1)-1;
@@ -338,12 +361,12 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
             
              sendTextMsg("Update Complete");
         }
-        if (frame % 200 == 0) {
+        if (frame % 900 == 0 || (frame<36000)&&(frame%80==0)) {
 
             checkForEnableWaitingFactories();
         }
         //if early game don't wait with guarding get on with it
-        if (frame % 650 == 0 || (frame<36000)&&(frame%60==0)) {
+        if (frame % 1000 == 0 || (frame<36000)&&(frame%60==0)) {
 
             checkGuardingBuilders();
         }
@@ -419,14 +442,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
 	public int unitDestroyed(Unit unit, Unit attacker) {
 
 
+        
         sendTextMsg("unitDestroyed");
-        if(DefManager.getUnitDefForUnit(unit.getDef()).IsExtractor){
-            sendTextMsg("freed mex spot");
-            ResourceHandler.freeUpMexSpot(unit.getPos(), this);
-            upgradeEnemyStatus(attacker);
-
-        }
-
         try{
 
             DJUnitManager.UnitDestroyed(unit,this);
@@ -434,9 +451,36 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
         }catch(Exception ex){
             sendTextMsg("unit destoyed prob: "+ex.getMessage());
         }
+        
+        
+        if(DefManager.getUnitDefForUnit(unit.getDef()).IsExtractor){
+            sendTextMsg("freed mex spot");
+            ResourceHandler.freeUpMexSpot(unit.getPos(), this);
+            upgradeEnemyStatus(attacker);
+
+        }
 
 
         sendTextMsg("unitDestroyed OK");
+		return 0; // signaling: OK
+	}
+
+    @Override
+	public int unitMoveFailed(Unit unit) {
+        if(unit.getDef().getBuildOptions().size()>0){
+            for(DJAIUnit un: DJUnitManager.Builders){
+                if(un.SpringUnit.getUnitId()==unit.getUnitId()){
+//                    if(un.BuildIndex>0) un.BuildIndex--;
+//                    m_TaskManager.allocateTaskToUnit(un, ResourceHandler, this);
+                    if(un.CurrentlyBuildingDef!=null){
+                        
+                        DJUnitManager.UnitBuildingNotCompleted(un.CurrentlyBuildingDef, this);
+                    }
+                    un.IsBuilderDoingGuard=true;
+                    return 0;
+                }
+            }
+        }
 		return 0; // signaling: OK
 	}
 
@@ -522,6 +566,8 @@ public class DJAI extends com.springrts.ai.oo.AbstractOOAI {
                }
            }
     }
+
+
     
 
 
