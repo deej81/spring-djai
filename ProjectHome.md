@@ -1,0 +1,1 @@
+Attempt to make a highly configurable AI for the spring engine.
